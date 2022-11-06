@@ -81,18 +81,19 @@ int main (int argc, char** argv) {
         option = atoi(arg);
         if (option == 1) {
             gets(str);
+            strcat(str, " \0");
         } else if (option == 2) {
             if (file_input(str, "input.txt")) {
                 return 1;
             }
         } else {
             random_generation(str);
-            puts(str);
         }
     } else {
         printf("No arguments\n");
         return 0;
     }
+    puts(str);
     clock_gettime(CLOCK_MONOTONIC, &start);
     char *pStr;
     pStr = str;
