@@ -149,7 +149,7 @@ int main (int argc, char** argv) {
         printf("arg = %s\n", arg);
         option = atoi(arg);
         if (option == 1) {
-            gets(str);
+            fgets(str, SIZEMAX, stdin);
             strcat(str, " \0");
         } else if (option == 2) {
             if (file_input(str, "input.txt")) {
