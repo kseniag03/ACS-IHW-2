@@ -25,7 +25,7 @@ int main (int argc, char** argv) {
         printf("arg = %s\n", arg);
         option = atoi(arg);
         if (option == 1) {
-            gets(str);
+            fgets(str, SIZEMAX, stdin);
             strcat(str, " \0");
         } else if (option == 2) {
             if (file_input(str, "input.txt")) {
@@ -46,7 +46,7 @@ int main (int argc, char** argv) {
     form_new_str(pStr, ans);
     clock_gettime(CLOCK_MONOTONIC, &end);
     elapsed_ns = timespec_difference(end, start);
-    printf("Elapsed: %lld ns\n", elapsed_ns);
+    printf("Elapsed: %ld ns\n", elapsed_ns);
     puts(ans);
     file_output(ans, "output.txt");
     return 0;
