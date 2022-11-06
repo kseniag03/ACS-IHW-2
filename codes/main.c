@@ -26,7 +26,6 @@ int main (int argc, char** argv) {
         option = atoi(arg);
         if (option == 1) {
             fgets(str, SIZEMAX, stdin);
-            strcat(str, " \0");
         } else if (option == 2) {
             if (file_input(str, "input.txt")) {
                 return 1;
@@ -38,7 +37,7 @@ int main (int argc, char** argv) {
         printf("No arguments\n");
         return 0;
     }
-    puts(str);
+    printf("Input: %s\n", str);
     clock_gettime(CLOCK_MONOTONIC, &start);
     char *pStr;
     pStr = str;
@@ -47,7 +46,7 @@ int main (int argc, char** argv) {
     clock_gettime(CLOCK_MONOTONIC, &end);
     elapsed_ns = timespec_difference(end, start);
     printf("Elapsed: %ld ns\n", elapsed_ns);
-    puts(ans);
+    printf("Output: %s\n", ans);
     file_output(ans, "output.txt");
     return 0;
 }
