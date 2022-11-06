@@ -18,7 +18,7 @@ argv[0] -- имя исполняемого файла <br>
 argv[1] -- формат ввода (1 -- console, 2 -- file, else -- random generation) <br>
 выводится в консоль и в файл "output.txt" <br>
 
-![Screenshot from 2022-10-23 18-22-55](https://user-images.githubusercontent.com/114473740/197400720-bfa9d7c5-eec4-43e8-9dbe-990bbc1cb4e6.png) <br>
+![Screenshot from 2022-11-06 23-54-50](https://user-images.githubusercontent.com/114473740/200194702-54b7ffdb-aae5-465c-b3b9-c9f6b7426c00.png) <br>
 ________________________
 
 ### 5. Результаты тестовых прогонов для различных исходных данных. <br> ###
@@ -26,25 +26,15 @@ ________________________
 Тесты можно посмотреть здесь: ACS-IHW-1/tests <br>
 
 Ввод с консоли: <br>
-![Screenshot from 2022-10-23 18-45-30](https://user-images.githubusercontent.com/114473740/197401849-27f25f57-c8ba-4c25-8f75-f8923e6701ec.png) <br>
+![Screenshot from 2022-11-06 23-30-44](https://user-images.githubusercontent.com/114473740/200193764-e0978872-eaaa-40b5-9d06-a2fab6d52c70.png) <br>
 
 Ввод из файла: <br>
-![Screenshot from 2022-10-23 18-55-01](https://user-images.githubusercontent.com/114473740/197402839-094a08cb-d55a-44cb-b3b7-e58f5c2ea281.png) <br>
-![Screenshot from 2022-10-23 18-57-26](https://user-images.githubusercontent.com/114473740/197402843-bf61e429-7d5d-42cc-86dd-74dd94bb4048.png) <br>
-![Screenshot from 2022-10-23 18-57-40](https://user-images.githubusercontent.com/114473740/197402848-13ab9749-01e3-4b8a-bd8b-6495f2fe7fde.png) <br>
-![Screenshot from 2022-10-23 18-58-05](https://user-images.githubusercontent.com/114473740/197402863-3d0101b4-21d5-43a4-b496-d90eb77bab40.png) <br>
-![Screenshot from 2022-10-23 18-58-25](https://user-images.githubusercontent.com/114473740/197402867-b67e2fd3-3357-475e-bbcd-632e90c358ce.png) <br>
-![Screenshot from 2022-10-23 18-58-54](https://user-images.githubusercontent.com/114473740/197402873-fff1f0c0-0d02-46cd-8d57-a1a523be33ca.png) <br>
-![Screenshot from 2022-10-23 19-04-09](https://user-images.githubusercontent.com/114473740/197402876-d20870e6-dfa9-48db-8c02-4d9ddc620a42.png) <br>
+![Screenshot from 2022-11-06 23-37-57](https://user-images.githubusercontent.com/114473740/200193892-ba71c22b-d12b-4304-a600-2454bb04e77d.png) <br>
+![Screenshot from 2022-11-06 23-41-17](https://user-images.githubusercontent.com/114473740/200193987-13eadfbf-2e0e-4a99-9a6f-0504bad323e6.png) <br>
 
 Генератор: <br>
-![Screenshot from 2022-10-23 19-08-13](https://user-images.githubusercontent.com/114473740/197403057-82a1c6da-c472-4b45-a3ff-839ce8a7a717.png)  <br>
-![Screenshot from 2022-10-23 19-08-21](https://user-images.githubusercontent.com/114473740/197403063-4e0fbce5-01ca-4f3a-bc5a-a3c98d2d25e7.png)  <br>
-// выводит два массива, поэтому очень много всего в консоли... <br>
-Если в коде поменять ограничения констант: <br>
-![Screenshot from 2022-10-23 19-13-10](https://user-images.githubusercontent.com/114473740/197403256-6cd42175-965c-45d4-a0d0-6ebf850f00f2.png) <br>
-Изменения в ассемблерном коде: <br>
-![Screenshot from 2022-10-23 19-14-04](https://user-images.githubusercontent.com/114473740/197403308-9a61074a-910e-4ec9-943b-194e6f21627c.png) <br>
+![Screenshot from 2022-11-06 23-46-03](https://user-images.githubusercontent.com/114473740/200194304-57cac48b-334f-4058-b7ca-4644f84057b9.png) <br>
+![Screenshot from 2022-11-06 23-46-56](https://user-images.githubusercontent.com/114473740/200194314-e8f75fda-c30a-4fff-b2b2-2d26938d7484.png) <br>
 ________________________
 
 ### 6. Исходные тексты программы на языке C. <br> ###
@@ -53,122 +43,57 @@ ________________________
 
 main.c -- основная функция
 ```c
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
-#include <stdint.h>
 
 extern int64_t timespec_difference(struct timespec a, struct timespec b);
-extern int get_min_from_array(int n, const int arr[]);
-extern int count_if_equals_element(int n, const int arr[], int element);
-extern void fill_ARRAY_B(int n, int size, int element);
-extern int command_line_input(int *n, char** argv);
-extern void command_line_output(int n, int arr[]);
-extern int file_input(int *n,  char *filename);
-extern void file_output(int n,  char *filename);
-extern void random_generation(int *n);
+extern int file_input(char *pStr,  char *filename);
+extern void file_output(char *pStr,  char *filename);
+extern void random_generation(char *pStr);
+extern void form_new_str(char *pStr, char ans[]);
 
 const int SIZEMAX = 100000;
-const int VALUEMAX = 100000;
-
-int ARRAY_A[100000];
-int ARRAY_B[100000];
+const int VALUEMAX = 128;
 
 int main (int argc, char** argv) {
     char *arg;
-    int option, n, size, min;
+    int option;
     struct timespec start, end;
     int64_t elapsed_ns;
+    char *str;
+    str = (char*)malloc(SIZEMAX);
     if (argc > 1) {
         arg = argv[1];
-        printf("arg = %s", arg);
-        printf("\n");
+        printf("arg = %s\n", arg);
         option = atoi(arg);
         if (option == 1) {
-            if (command_line_input(&n, argv)) {
-                return 1;
-            }
+            fgets(str, SIZEMAX, stdin);
         } else if (option == 2) {
-            if (file_input(&n, "input.txt")) {
+            if (file_input(str, "input.txt")) {
                 return 1;
             }
         } else {
-            random_generation(&n);
-            command_line_output(n, ARRAY_A);
+            random_generation(str);
         }
     } else {
         printf("No arguments\n");
         return 0;
     }
+    printf("Input: %s\n", str);
     clock_gettime(CLOCK_MONOTONIC, &start);
-    min = get_min_from_array(n, ARRAY_A);
-    size = count_if_equals_element(n, ARRAY_A, min);
-    size = n - size;
-    fill_ARRAY_B(n, size, min);
+    char *pStr;
+    pStr = str;
+    char ans[100000] = "";
+    form_new_str(pStr, ans);
     clock_gettime(CLOCK_MONOTONIC, &end);
     elapsed_ns = timespec_difference(end, start);
     printf("Elapsed: %ld ns\n", elapsed_ns);
-    command_line_output(size, ARRAY_B);
-    file_output(size, "output.txt");
+    printf("Output: %s\n", ans);
+    file_output(ans, "output.txt");
     return 0;
-}
-```
-<br>
-
-command_line_input.c -- ввод из командной строки
-```c
-#include <stdio.h>
-#include <stdlib.h>
-
-extern const int SIZEMAX;
-
-extern int ARRAY_A[];
-
-int command_line_input(int *n, char** argv) {
-    int i;
-    *n = atoi(argv[2]);
-    if (*n <= 0 || *n > SIZEMAX) {
-        printf("The num of elems in arr must be from 1 to %d\n", SIZEMAX);
-        return 1;
-    }
-    for (i = 0; i < *n; ++i) {
-        if (argv[i + 3] == NULL) {
-            printf("Not enough elems in arr\n");
-            return 1;
-        }
-        ARRAY_A[i] = atoi(argv[i + 3]);
-    }
-    return 0;
-}
-```
-<br>
-
-command_line_output.c -- вывод в командную строку/консоль
-```c
-#include <stdio.h>
-
-void command_line_output(int n, int arr[]) {
-    int i;
-    printf("[ ");
-    for (i = 0; i < n; ++i) {
-        printf("%d ", arr[i]);
-    }
-    printf("]");
-    printf("\n");
-}
-```
-<br>
-
-count_if_equals_element.c -- подсчёт числа эл-в массива, равных данному
-```c
-int count_if_equals_element(int n, const int arr[], int element) {
-    int cnt = 0;
-    for (int i = 0; i < n; ++i) {
-        if (arr[i] == element) {
-            ++cnt;
-        }
-    }
-    return cnt;
 }
 ```
 <br>
@@ -177,34 +102,19 @@ file_input.c -- ввод данных из входного файла "input.tx
 ```c
 #include <stdio.h>
 
-extern const int SIZEMAX;
-
-extern int ARRAY_A[];
-
-int file_input(int *n,  char *filename) {
-    int i;
+int file_input(char *pStr,  char *filename) {
     FILE *file;
     if ((file = fopen(filename, "r")) == NULL) {
         printf("Unable to open file '%s'\n", filename);
         return 1;
     }
-    if (fscanf(file, "%d", n) < 1) {
-        printf ("Reading file '%s' error\n", filename);
-        fclose(file);
-        return 1;
-    }
-    if (*n <= 0 || *n > SIZEMAX) {
-        printf("The num of elems in arr must be from 1 to %d\n", SIZEMAX);
-        fclose(file);
-        return 1;
-    }
-    for (i = 0; i < *n; ++i) {
-        if (fscanf(file, "%d", &ARRAY_A[i]) < 1) {
-            printf("Reading file '%s' error\n", filename);
-            fclose(file);
-            return 1;
-        }
-    }
+    int ch;
+    do {
+        ch = fgetc(file);
+        *pStr = ch;
+        ++pStr;
+    } while(ch != -1);
+    *pStr = '\0';
     fclose(file);
     return 0;
 }
@@ -215,14 +125,12 @@ file_output.c -- вывод данных в выходной файл "output.tx
 ```c
 #include <stdio.h>
 
-extern int ARRAY_B[];
-
-void file_output(int n,  char *filename) {
-    int i;
+void file_output(char *pStr, char *filename) {
     FILE *file;
     if ((file = fopen(filename, "w")) != NULL) {
-        for (i = 0; i < n; ++i) {
-            fprintf(file, "%d ", ARRAY_B[i]);
+        while (*pStr) {
+            fprintf(file, "%c", *pStr);
+            ++pStr;
         }
         fclose(file);
     }
@@ -230,57 +138,51 @@ void file_output(int n,  char *filename) {
 ```
 <br>
 
-fill_ARRAY_B.c -- заполнение массива B согласно условию задачи
+random_generation.c -- псевдослучайная генерация исходной строки <br>
+В качестве условностей: некоторые нечитаемые символы ASCII пропускались, числа отделялись пробелами, символы-цифры с кодом, кратным 7, становились отрицательными (для разнообразия вывода)
 ```c
-extern int ARRAY_A[];
-extern int ARRAY_B[];
-
-void fill_ARRAY_B(int n, int size, int element) {
-    for (int i = 0, j = 0; i < n && j < size; ++i) {
-        if (ARRAY_A[i] == element) {
-            continue;
-        }
-        ARRAY_B[j] = ARRAY_A[i];
-        ++j;
-    }
-}
-```
-<br>
-
-get_min_from_array.c -- получение минимума массива
-```c
-int get_min_from_array(int n, const int arr[]) {
-    int min = arr[0];
-    for (int i = 1; i < n; ++i) {
-        if (arr[i] < min) {
-            min = arr[i];
-        }
-    }
-    return min;
-}
-```
-<br>
-
-random_generation.c -- псевдослучайная генерация исходного массива
-```c
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
 extern const int SIZEMAX;
 extern const int VALUEMAX;
 
-extern int ARRAY_A[];
-
-void random_generation(int *n) {
+void random_generation(char *pStr) {
     srand(time(NULL));
-    *n = rand() % SIZEMAX;
-    if (*n < 1) {
-        ++*n;
+    int n = rand() % (SIZEMAX / 2);
+    if (n < 1) {
+        ++n;
     }
     int i;
-    for (i = 0; i < *n; ++i) {
-        ARRAY_A[i] = rand() % VALUEMAX;
+    short isNumber = 0;
+    for (i = 0; i < n; ++i) {
+        int c = rand() % VALUEMAX;
+        if (c < 32) {
+            --i;
+            continue;
+        }
+        if ('0' <= c && c <= '9') {
+            if (!isNumber) {
+                *pStr = ' ';
+                ++pStr;
+                if (c % 7 == 0) {
+                    *pStr = '-';
+                    ++pStr;
+                }
+            }
+            isNumber = 1;
+        } else {
+            if (isNumber) {
+                isNumber = 0;
+                *pStr = ' ';
+                ++pStr;
+            }
+        }
+        *pStr = c;
+        ++pStr;
     }
+    *pStr = '\0';
 }
 ```
 <br>
@@ -302,6 +204,59 @@ int64_t timespec_difference(struct timespec a, struct timespec b) {
 }
 ```
 <br>
+
+form_new_str.c -- формирование новой строки согласно условию задачи
+```c
+#include <stdio.h>
+#include <string.h>
+
+void form_new_str(char *pStr, char ans[]) {
+    short isNumber = 0;
+    short isNegative = 0;
+    char tmp[256] = "";
+    while (*pStr) {
+        if (*pStr == '-') {
+            if (*(pStr + 1) >= '0' && *(pStr + 1) <= '9') {
+                isNegative = 1;
+            }
+        }
+        if (*pStr >= '0' && *pStr <= '9') {
+            isNumber = 1;
+            char cToStr[2];
+            cToStr[0] = *pStr;
+            cToStr[1] = '\0';
+            strcat(tmp, cToStr);
+        } else {
+            if (isNumber) {
+                isNumber = 0;
+                while (tmp[0] == '0' && strlen(tmp) > 1) {
+                    memmove(tmp, tmp + 1, strlen(tmp));
+                }
+                if (isNegative && !(tmp[0] == '0' && strlen(tmp) == 1)) {
+                    memmove(tmp + 1, tmp, strlen(tmp) + 1);
+                    memset(tmp, '-', 1);
+                    memmove(tmp + 1, tmp, strlen(tmp) + 1);
+                    memset(tmp, '(', 1);
+                    strcat(tmp, ")");
+                }
+                strcat(ans, tmp);
+                strcat(ans, "+");
+                tmp[0] = '\0';
+                isNegative = 0;
+            }
+        }
+        ++pStr;
+    }
+    if (isNumber) {
+        strcat(ans, tmp);
+        strcat(ans, "+");
+        tmp[0] = '\0';
+    }
+    ans[strlen(ans) - 1] = '\0';
+}
+```
+<br>
+
 ________________________
 
 ### 7. Тексты программы на языке ассемблера, разработанной вручную или полученной после компиляции и расширенной комментариями. <br> ###
@@ -792,12 +747,12 @@ DWORD PTR -24[rbp] -> r15d <br>
 Таблица сравнений приведена ниже: <br>
 | Критерий	     	| Скомпилированный Си| С оптим. -O3	   | С оптим. -Os        | Отредактированный вручную после компиляции |       
 | ----------------------|:------------------:| :------------------:|:-------------------:|:------------------------------------------:|
-| размер асм-файла	| 15 631 байт        | 18 043 байт         | 13 603 байт         | 818 312 байт                               |
-| размер испол. файла	| 17 280 байт        | 17 360 байт         | 17 360 байт         | 24 879 байт                                |
-| время работы		| 387 918, 1 ns      | 221 510, 8 ns       | 293 939, 9 ns       | 1 236 683 ns                               |
+| размер асм-файла	| 12 588 байт        | 12 257 байт         | 10 720 байт         | - байт                               |
+| размер испол. файла	| 17 120 байт        | 17 240 байт         | 17 192 байт         | - байт                                |
+| время работы		| 738 438.1 ns       | 427 981.7 ns        | 326 355.1 ns        | - ns                               |
 
 <br>
-// размер асм-файла == размер 10 файлов расширения .s (из папки time-size-check), исполняемый файл в этой же папке
+// размер асм-файла == размер 6 файлов расширения .s (из папки time-size-check), исполняемый файл в этой же папке
 <br>
 // время работы == усреднённое время работы 10 запусков псевдослучаного генератора (т.к. большой размер массива)
 <br>
@@ -807,15 +762,42 @@ DWORD PTR -24[rbp] -> r15d <br>
 Результаты 10 замеров генератора <br>
 
 Скомп. Си: <br>
-
+533317
+1096175
+1208028
+1049533
+280498
+701592
+1007358
+1057301
+200140
+250439
 <br>
 
 Скомп. Си c option: -O3 <br>
-
+181253
+482087
+573459
+528316
+227937
+522753
+672271
+523038
+41172
+527531
 <br>
 
 Скомп. Си c option: -Os <br>
-
+445427
+635534
+459203
+488791
+234542
+150897
+213529
+75841
+227566
+332221
 <br>
 
 Скомп. Си c правками <br>

@@ -54,7 +54,7 @@ void file_output(char *pStr, char *filename) {
 
 void random_generation(char *pStr) {
     srand(time(NULL));
-    int n = rand() % SIZEMAX;
+    int n = rand() % (SIZEMAX / 2);
     if (n < 1) {
         ++n;
     }
@@ -149,19 +149,19 @@ int main (int argc, char** argv) {
         printf("arg = %s\n", arg);
         option = atoi(arg);
         if (option == 1) {
-            gets(str);
+            fgets(str, SIZEMAX, stdin);
         } else if (option == 2) {
             if (file_input(str, "input.txt")) {
                 return 1;
             }
         } else {
             random_generation(str);
-            puts(str);
         }
     } else {
         printf("No arguments\n");
         return 0;
     }
+    printf("Input: %s\n", str);
 
     // timeStart
     clock_gettime(CLOCK_MONOTONIC, &start);
@@ -175,10 +175,10 @@ int main (int argc, char** argv) {
     // timeEnd
     clock_gettime(CLOCK_MONOTONIC, &end);
     elapsed_ns = timespec_difference(end, start);
-    printf("Elapsed: %lld ns\n", elapsed_ns);
+    printf("Elapsed: %ld ns\n", elapsed_ns);
 
     // output
-    puts(ans);
+    printf("Output: %s\n", ans);
     file_output(ans, "output.txt");
 
     return 0;
