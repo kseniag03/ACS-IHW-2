@@ -8,7 +8,7 @@ extern int64_t timespec_difference(struct timespec a, struct timespec b);
 extern int file_input(char *pStr,  char *filename);
 extern void file_output(char *pStr,  char *filename);
 extern void random_generation(char *pStr);
-extern void formNewStr(char *pStr, char ans[]);
+extern void form_new_str(char *pStr, char ans[]);
 
 const int SIZEMAX = 100000;
 const int VALUEMAX = 128;
@@ -89,7 +89,7 @@ void random_generation(char *pStr) {
     *pStr = '\0';
 }
 
-void formNewStr(char *pStr, char ans[]) {
+void form_new_str(char *pStr, char ans[]) {
     short isNumber = 0;
     short isNegative = 0;
     char tmp[256] = "";
@@ -170,7 +170,7 @@ int main (int argc, char** argv) {
     char *pStr;
     pStr = str;
     char ans[100000] = "";
-    formNewStr(pStr, ans);
+    form_new_str(pStr, ans);
 
     // timeEnd
     clock_gettime(CLOCK_MONOTONIC, &end);
