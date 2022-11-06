@@ -18,7 +18,7 @@ argv[0] -- имя исполняемого файла <br>
 argv[1] -- формат ввода (1 -- console, 2 -- file, else -- random generation) <br>
 выводится в консоль и в файл "output.txt" <br>
 
-![Screenshot from 2022-10-23 18-22-55](https://user-images.githubusercontent.com/114473740/197400720-bfa9d7c5-eec4-43e8-9dbe-990bbc1cb4e6.png) <br>
+![Screenshot from 2022-11-06 23-54-50](https://user-images.githubusercontent.com/114473740/200194702-54b7ffdb-aae5-465c-b3b9-c9f6b7426c00.png) <br>
 ________________________
 
 ### 5. Результаты тестовых прогонов для различных исходных данных. <br> ###
