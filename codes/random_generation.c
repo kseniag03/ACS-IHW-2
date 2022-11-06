@@ -7,7 +7,7 @@ extern const int VALUEMAX;
 
 void random_generation(char *pStr) {
     srand(time(NULL));
-    int n = rand() % SIZEMAX;
+    int n = rand() % (SIZEMAX / 2);
     if (n < 1) {
         ++n;
     }
