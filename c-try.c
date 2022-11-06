@@ -175,7 +175,7 @@ int main (int argc, char** argv) {
     // timeEnd
     clock_gettime(CLOCK_MONOTONIC, &end);
     elapsed_ns = timespec_difference(end, start);
-    printf("Elapsed: %lld ns\n", elapsed_ns);
+    printf("Elapsed: %ld ns\n", elapsed_ns);
 
     // output
     printf("Output: %s\n", ans);
