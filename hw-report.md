@@ -156,8 +156,8 @@ random_generation.c -- псевдослучайная генерация исх�
 #include <stdlib.h>
 #include <time.h>
 
-const int SIZEMAX = 100000;
-const int VALUEMAX = 128;
+extern const int SIZEMAX;
+extern const int VALUEMAX;
 
 void random_generation(char *pStr) {
     srand(time(NULL));
