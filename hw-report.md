@@ -510,54 +510,55 @@ command_line_input:			# тело command_line_input
 ```
 <br>
 
-command_line_output.s
+file_output.s
 
 ```assembly
-.intel_syntax noprefix			# intel-синтаксис
-.globl command_line_output		# точка запуска command_line_output
-.type command_line_output, @function	# объявление command_line_output как функции
 
-.section .data				# секция объявления переменных
-	bracket:	.string		"[ "
-	frmtnum:	.string		"%d "
+.intel_syntax noprefix				# intel-синтаксис
+.globl file_output				# точка запуска file_output
+.type file_output, @function			# объявление file_output как функции
 
-.text					# секция кода
+.section .data					# секция объявления переменных
+	writeFile:	.string		"w"	# формат открытия файла (запись)
 
-command_line_output:
+.text						# секция кода
+
+file_output:
 	push	rbp				# сохраняем rbp на стек
 	mov	rbp, rsp			# присваиваем rbp = rsp
-	sub	rsp, 32				# rsp -= 32 (выделение памяти на стеке)
-	mov	DWORD PTR -20[rbp], edi		# 1-й аргумент command_line_output — int n (в стеке на -20)
-	mov	QWORD PTR -32[rbp], rsi		# 2-й аргумент command_line_output — int arr[] (в стеке на -32)
-	
-	lea	rdi, bracket[rip]		# rdi := "[ " (1-й аргумент функции)
-	call	printf@PLT			# printf("[ ")
-	mov	r12d, 0				# i = 0
-	jmp	.LOOP				# переход к LOOP
-	
-.PRINTELEM:
-	mov	eax, r12d			# eax := i
-	lea	rdx, 0[0 + rax * 4]		# rdx := rax * 4
-	mov	rax, QWORD PTR -32[rbp]		# rax := n	
-	add	rax, rdx			# rax := arr[i]
-	
-	lea	rdi, frmtnum[rip]		# rdi := "%d " (1-й аргумент функции)
-	mov	esi, DWORD PTR [rax]		# esi := arr[i] (2-й аргумент функции)
-	call	printf@PLT			# printf("%d ", arr[i])
-	add	r12d, 1				# ++i
-	
+
+	mov r12, rdi				# 1-й аргумент file_output — char *pStr (в свободном регистре r12)
+	mov r13, rsi				# 2-й аргумент file_output — char *filename(в свободном регистре r13)
+
+	mov	rdi, r13			# 1-й аргумент — имя файла
+	lea	rsi, writeFile[rip]		# 2-й аргумент —  формат открытия файла (запись)
+	call	fopen@PLT			# вызов функции открытия файла: file = fopen(filename, "w"), в r13 ссылка на файл
+
+	mov r14, r13				# FILE *file = filename
+	cmp r14, 0				# сравнение file с 0 (NULL)
+	je	.EXIT				# если file == NULL, переход к выходу из программы
+
+	jmp	.LOOP				# иначе переход к метке LOOP
+
+.PRINT:
+	movsx	eax, al				# eat = al
+
+	mov	edi, eax			# 1-й аргумент — текущий символ (*pStr)
+	mov	rsi, r14			# 2-й аргумент — file
+	call	fputc@PLT			# вызов fputc(*pStr, file)
+	add r12, 1				# ++pStr
+
 .LOOP:
-	cmp	r12d, DWORD PTR -20[rbp]	# сравнение i и n
-	jl	.PRINTELEM			# если i < n, переход в PRINTELEM
-	
-	mov	edi, 93				# передача 1-го аргумента в функцию
-	call	putchar@PLT			# выводит символ ']' (номер 93), т.е. printf("]")
-	mov	edi, 10				# передача 1-го аргумента в функцию		
-	call	putchar@PLT			# выводит символ перевода строки (номер 10), т.е. printf("\n")
-	
+	mov rax, r12 				# rax = pStr
+	movzx	eax, BYTE PTR [rax]		# вычисление адреса текущего символа (записывается в eax)
+	test	al, al				# логическое сравнения значения регистра с нулем
+	jne	.PRINT				# если не равно 0, переход к метке PRINT
+	mov	rdi, r14			# 1-й аргумент — file
+	call	fclose@PLT			# вызов fclose(file)
+
+.EXIT:
 	leave					# освобождает стек на выходе из функции main
 	ret					# выполняется выход из программы
-
 ```
 
 <br>
