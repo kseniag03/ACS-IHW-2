@@ -417,93 +417,62 @@ main:					# тело main
 ![main_stack](https://user-images.githubusercontent.com/114473740/197405043-2ef52153-8269-4fa7-9005-f7174bb80fa9.jpg) <br>
 <br>
 
-command_line_input.s
+file_input.s
 
 ```assembly
-.intel_syntax noprefix			# intel-синтаксис
-.globl command_line_input		# точка запуска command_line_input
-.type command_line_input, @function	# объявление command_line_input как функции
+.intel_syntax noprefix				# intel-синтаксис
+.globl file_input				# точка запуска file_input
+.type file_input, @function			# объявление file_input как функции
 
-.section .data				# секция объявления переменных
-	wrongElemsNum:	.string		"The num of elems in arr must be from 1 to %d\n"
-	notEnough:	.string		"Not enough elems in arr\n"
+.section .data					# секция объявления переменных
+	readfile:	.string		"r"
+	notOpenFile:	.string	"Unable to open file '%s'\n"
 
-.text					# секция кода
+.text						# секция кода
 
-command_line_input:			# тело command_line_input
-	push	rbp					# сохраняем rbp на стек
-	mov	rbp, rsp				# присваиваем rbp = rsp
-	sub	rsp, 32					# rsp -= 32 (выделение памяти на стеке)
+file_input:
+	push	rbp				# сохраняем rbp на стек
+	mov	rbp, rsp			# присваиваем rbp = rsp
 
-	mov	QWORD PTR -24[rbp], rdi			# 1-й аргумент command_line_input — int *n (в стеке на -24)
-	mov	QWORD PTR -32[rbp], rsi			# 2-й аргумент command_line_input — char** argv (в стеке на -32)
+	mov r12, rdi				# 1-й аргумент file_input — char *pStr (в свободном регистре r12)
+	mov r13, rsi				# 2-й аргумент file_input — char *filename(в свободном регистре r13)
 
-	mov	rax, QWORD PTR -32[rbp]			# rax := argv
-	mov	rdi, QWORD PTR [rax + 16]		# rdi := argv[2] (1-й аргумент функции)
-	call	atoi@PLT				# вызов функции atoi для перевода в аргумент типа int, т.е. atoi(argv[2])
+	mov	rdi, r13			# 1-й аргумент — имя файла
+	lea	rsi, readFile[rip]		# 2-й аргумент —  формат открытия файла (чтение)
+	call	fopen@PLT			# вызов функции открытия файла: file = fopen(filename, "r"), в r13 ссылка на файл
 
-	mov	rdx, QWORD PTR -24[rbp]			# rdx := *n
-	mov	DWORD PTR [rdx], eax			# n := результат вызова функции atoi
-	mov	eax, DWORD PTR [rdx]			# eax := n
-	cmp	eax, 0					# сравнение n и 0
-	jle	.WRONGN					# если n <= 0, переходим к метке WRONGN
-	cmp	eax, SIZEMAX[rip]			# иначе сравниваем n и SIZEMAX
-	jle	.BEFORELOOP				# если n <= SIZEMAX, переходим к метке BEFORELOOP
+	mov r14, r13				# FILE *file = filename
+	cmp r14, 0				# сравнение file с 0 (NULL)
+	jne	.LOOP				# если file != NULL, переход к метке LOOP
 
-.WRONGN:				# введен неверный размер массива
-	lea	rdi, wrongElemsNum[rip]			# 1-й аргумент функции — строка "The num of elems in arr must be from 1 to %d\n"
-	mov	esi, SIZEMAX[rip]			# 2-й аргумент функции — константа SIZEMAX 
-	call	printf@PLT				# вызов функции печати для вывода сообщения об ошибке, т.е. printf("The num of elems in arr must be from 1 to %d\n", SIZEMAX)		
+	lea	rdi, notOpenFile[rip]		# 1-й аргумент —  сообщение об ошибке
+	mov	rsi, r13			# 2-й аргумент —  имя файла
+	call	printf@PLT			# вызов printf("Unable to open file '%s'\n", filename)
 
-	mov	eax, 1					# return 1
-	jmp	.EXIT					# переход к метке EXIT
+	mov	eax, 1				# return 1						
+	jmp	.EXIT				# переход к выходу из программы
 
-.BEFORELOOP:				# объявляем индекс перед циклом
-	mov	r12d, 0					# i := 0 (в свободном регистре r12)
-	jmp	.LOOPFOR				# переход к метке LOOPFOR
+.LOOP:
+	mov	rdi, r14			# 1-й аргумент — file
+	call	fgetc@PLT			# вызов ch = fgetc(file) — получение символа из файлового потока
+	mov r15, eax				# в свободный регистр r15 записывается результат функции fgetc
 
-.CHECKINPUTELEMS:
-	mov	eax, r12d				# eax := i
-	add	rax, 3					# rax += 3
-	lea	rdx, 0[0 + rax * 8]			# rdx := (rax + 3) * 8
+	mov	rax, r12			# rax = r12 
+	mov	BYTE PTR [rax], dl		# по адресу текущего символа записывается символ из файла (*pStr = ch)
+	add r12, 1				# ++pStr
 
-	mov	rax, QWORD PTR -32[rbp]			# rax := argv
-	add	rax, rdx				# rax += rdx
-	mov	rax, QWORD PTR [rax]			# rax := argv[i + 3]
+	cmp	r15, -1				# сравнение текущего символа с -1
+	jne	.LOOP				# если не равен -1, переход к метке LOOP
 
-	test	rax, rax				# логическое сравнене — проверка, является ли элемент NULL
-	jne	.ARRAYELEMS				# если не NULL, переход к метке ARRAYELEMS
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], 0		# по адресу последнего символа записывается конец строки (*pStr = ‘\0’)
 
-	lea	rdi, notEnough[rip]			# 1-й аргумент функции — строка "Not enough elems in arr\n"
-	call	printf@PLT				# вызов функции печати для вывода сообщения об ошибке, т.е. printf("Not enough elems in arr\n")
+	mov	rdi, r14			# 1-й аргумент — file
+	call	fclose@PLT			# вызов fclose(file)
 
-	mov	eax, 1 					# return 1;
-	jmp	.EXIT					# переход к метке EXIT
+	mov	eax, 0				# return 0
 
-.ARRAYELEMS:
-	mov	eax, r12d				# eax := i
-	add	rax, 3					# rax += 3
-	lea	rdx, 0[0 + rax * 8]			# rdx := (rax + 3) * 8
-
-	mov	rax, QWORD PTR -32[rbp]			# rax := argv
-	add	rax, rdx				# rax += rdx
-	mov	rdi, QWORD PTR [rax]			# rdi := argv[i + 3] (1-й аргумент функции)
-	call	atoi@PLT				# вызов функции atoi для перевода в аргумент типа int, т.е. atoi(argv[i + 3])
-
-	movsx	rdx, r12d				# в rdx копируется r12d
-	lea	rcx, 0[0 + rdx * 4]			# rcx := rdx * 4
-	lea	rdx, ARRAY_A[rip]			# rdx := &ARRAY_A[rip]
-	mov	DWORD PTR [rcx + rdx], eax		# *(rcx + rdx) = eax
-	add	r12d, 1					# ++i
-
-.LOOPFOR:				# цикл for по i
-	mov	rax, QWORD PTR -24[rbp]			# rax := *n
-	mov	eax, DWORD PTR [rax]			# eax := n
-	cmp	r12d, eax				# сравниваем i c n
-	jl	.CHECKINPUTELEMS			# если i < n, переход к метке CHECKINPUTELEMS
-	mov	eax, 0					# return 0
-
-.EXIT:					# выход из программы
+.EXIT:
 	leave					# освобождает стек на выходе из функции main
 	ret					# выполняется выход из программы
 
