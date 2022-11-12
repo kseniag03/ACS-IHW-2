@@ -435,11 +435,11 @@ file_input:
 	mov	rbp, rsp			# присваиваем rbp = rsp
 
 	mov	r12, rdi			# 1-й аргумент file_input — char *pStr (в свободном регистре r12)
-	mov	r13, rsi			# 2-й аргумент file_input — char *filename(в свободном регистре r13)
+	mov	r13, rsi			# 2-й аргумент file_input — char *filename (в свободном регистре r13)
 
 	mov	rdi, r13			# 1-й аргумент — имя файла
 	lea	rsi, readFile[rip]		# 2-й аргумент —  формат открытия файла (чтение)
-	call	fopen@PLT			# вызов функции открытия файла: file = fopen(filename, "r"), в r13 ссылка на файл
+	call	fopen@PLT			# вызов функции открытия файла: file = fopen(filename, "r"), в rax результат функции
 
 	mov	r14, rax			# FILE *file = filename (возвращаемое значение из функции)
 	cmp	r14, 0				# сравнение file с 0 (NULL)
@@ -474,7 +474,7 @@ file_input:
 	mov	eax, 0				# return 0
 
 .EXIT:
-	leave					# освобождает стек на выходе из функции main
+	leave					# освобождает стек на выходе из функции
 	ret					# выполняется выход из программы
 
 ```
@@ -497,11 +497,11 @@ file_output:
 	mov	rbp, rsp			# присваиваем rbp = rsp
 
 	mov	r12, rdi			# 1-й аргумент file_output — char *pStr (в свободном регистре r12)
-	mov	r13, rsi			# 2-й аргумент file_output — char *filename(в свободном регистре r13)
+	mov	r13, rsi			# 2-й аргумент file_output — char *filename (в свободном регистре r13)
 
 	mov	rdi, r13			# 1-й аргумент — имя файла
 	lea	rsi, writeFile[rip]		# 2-й аргумент —  формат открытия файла (запись)
-	call	fopen@PLT			# вызов функции открытия файла: file = fopen(filename, "w"), в r13 ссылка на файл
+	call	fopen@PLT			# вызов функции открытия файла: file = fopen(filename, "w"), в rax результат функции
 
 	mov	r14, rax			# FILE *file = filename (возвращаемое значение из функции)
 	cmp	r14, 0				# сравнение file с 0 (NULL)
@@ -528,51 +528,16 @@ file_output:
 	call	fclose@PLT			# вызов fclose(file)
 
 .EXIT:
-	leave					# освобождает стек на выходе из функции main
+	leave					# освобождает стек на выходе из функции
 	ret					# выполняется выход из программы
-	
+
 ```
 
 <br>
 
-count_if_equals_element.s
+form_new_str.s
 
 ```assembly
-.intel_syntax noprefix
-.globl count_if_equals_element
-.type count_if_equals_element, @function
-
-.text
-	
-count_if_equals_element:
-	push	rbp
-	mov	rbp, rsp
-	mov	r13d, edi			# r13d = n
-	mov	r14, rsi			# r14 = int arr[]
-	mov	r15d, edx			# r15d = int element
-	
-	mov	r11d, 0				# cnt = 0
-	mov	r12d, 0				# i = 0
-	jmp	.LOOP				# переход к циклу
-	
-.INCCNT:
-	lea	rdx, 0[0 + rax * 4]		# rdx := rax * 4
-	mov	rax, r14			# rax := &arr
-	add	rax, rdx			# rax += rdx
-	mov	eax, DWORD PTR [rax]		# eax := arr[i]
-	cmp	r15d, eax			# сравнение element и arr[i]
-	jne	.INCI				# если arr[i] != elementn, переход к INCI
-	add	r11d, 1				# иначе ++cnt;
-	
-.INCI:
-	add	r12d, 1				# ++i
-	
-.LOOP:
-	cmp	r12d, r13d			# сравнение i и n
-	jl	.INCCNT				# если i < n, переход к INCCNT
-	mov	eax, r11d			# return cnt
-	pop	rbp				# очистка стека
-	ret					# выполняется выход из программы
 
 ```
 
@@ -581,122 +546,118 @@ count_if_equals_element:
 random_generation.s
 
 ```assembly
-асм
-
-
 .intel_syntax noprefix				# intel-синтаксис
 .globl random_generation			# точка запуска random_generation
 .type random_generation, @function		# объявление random_generation как функции
 
-.text						# секция кода
+.text
 
 random_generation:
 	push	rbp				# сохраняем rbp на стек
 	mov	rbp, rsp			# присваиваем rbp = rsp
 
-	mov	r12, rdi			# 1-й аргумент file_input — char *pStr (в свободном регистре r12)
+	mov 	eax, SIZEMAX[rip]		# делимое SIZEMAX в eax
+	mov	ecx, 2				# делитель 2 в ecx
+	cdq					# преобразовывает SIZEMAX в 8-байтовое значение
+	idiv 	ecx				# SIZEMAX / 2 (частное сохраняется в eax, остаток в edx)
+	mov	r13d, eax			# в свободный регистр r13d (double word) записываем результат деления SIZEMAX / 2
+
+	mov	r12, rdi			# в свободный регистр r12 записываем переданный в ф-ю параметр (pStr)
 
 	mov	edi, 0				# 1-й аргумент — 0 (NULL)
 	call	time@PLT			# вызов функции time(NULL)
 
 	mov	edi, eax			# 1-й аргумент — результат вызова time(NULL)
 	call	srand@PLT			# вызов функции srand(time(NULL))
-	call	rand@PLT			# вызов функции rand()
 
-	mov	edx, SIZEMAX[rip]		# 
-	mov	ecx, edx			# 
-	shr	ecx, 31				# 
-	add	edx, eco			# 
-	sar	edx				# 
-	mov	ecx, edx			# 
-	idiv	ecx				# 
+	xor 	edx, edx 			# очистка edx, в который запишется остаток от операции деления div
+	call	rand@PLT			# вызов функции rand() — делимое, записываемое в eax
+	mov	ecx, r13d			# делитель (SIZEMAX / 2) в ecx
+	cdq					# преобразовывает rand() в 8-байтовое значение
+	idiv 	ecx				# rand() / (SIZEMAX / 2) (частное сохраняется в eax, остаток в edx)
 
-	mov	r11, edx			# n = rand() % (SIZEMAX / 2)
-	cmp	r11, 0				# сравниваем с 0
-	jg	.L2				#если больше или равен, переходим к метке
-	add	r11, 1				# иначе ++n
+	mov	r11d, edx			# в свободный регистр r11d (double word) записываем остаток (int n = rand() % (SIZEMAX / 2))
+	cmp	r11d, 0				# сравнение n с нулём
+	jg	.FLAGS				# если n > 0, переходим к метке FLAGS
+	add	r11d, 1				# иначе ++n
 
-.L2:
-	mov	r10d, 0 			# short isNumber = 0;
-	mov	r9d, 0				# 
-	jmp	.L3				# 
+.FLAGS:
+	mov	r10w, 0				# short isNumber = 0
+	mov	r15d, 0				# int i = 0
+	jmp	.LOOPBEGIN			# переход к метке LOOPBEGIN
 
-.L9:
-	call	rand@PLT
-	mov	ecx, VALUEMAX[rip]
-	idiv	ecx				# ecx % VALUEMAX (% 128)
-	mov	r8d, edx
-	cmp	r8d, 31
-	jg	.L4
-	sub	r9d, 1
-	jmp	.L5
+.GETCHAR:
+	xor 	edx, edx 			# очистка edx, в который запишется остаток от операции деления div
+	call	rand@PLT			# вызов функции rand() — делимое, записываемое в eax
+	mov	ecx, VALUEMAX[rip]		# делитель VALUEMAX (128) в ecx
+	cdq					# преобразовывает rand() в 8-байтовое значение
+	idiv	ecx				# rand() / VALUEMAX (частное сохраняется в eax, остаток в edx)
 
-.L4:
-	cmp	r8d, 47
-	jle	.L6
-	cmp	r8d, 57
-	jg	.L6
-	cmp 	r10d, 0
-	jne	.L7
-	mov	rax, QWORD PTR -24[rbp]
-	mov	BYTE PTR [rax], 32
+	mov	r14d, edx			# в свободный регистр r14d (double word) записываем остаток (int c = rand() % VALUEMAX)
+	cmp	r14d, 31			# сравнение кода символа с 31
+	jg	.CHECKNEGATIVE			# если больше 31, переход к метке CHECKNEGATIVE
 
-	add	QWORD PTR -24[rbp], 1
+	sub	r15d, 1				# иначе --i (запускаем цикл заново)
+	jmp	.INCINDEX			# переход к метке INCINDEX
 
-	mov	edx, r8d
-	movsx	rax, edx
-	imul	rax, rax, -1840700269
-	shr	rax, 32
-	add	eax, edx
-	sar	eax, 2
-	mov	ecx, edx
-	sar	ecx, 31
-	sub	eax, ecx
-	mov	ecx, eax
-	sal	ecx, 3
-	sub	ecx, eax
-	mov	eax, edx
-	sub	eax, ecx
-	test	eax, eax
-	jne	.L7
-	mov	rax, QWORD PTR -24[rbp]
-	mov	BYTE PTR [rax], 45
+.CHECKNEGATIVE:
+	cmp	r14d, 47			# сравнение кода символа с 48 (с 48-го начинаются цифры)
+	jl	.ADDCLOSESPACE			# если меньше 48, переход к метке ADDCLOSESPACE
 
-	add	QWORD PTR -24[rbp], 1
+	cmp	r14d, 57			# сравнение кода символа с 57 (с 58-го заканчиваются цифры)
+	jg	.ADDCLOSESPACE			# если больше 57, переход к метке ADDCLOSESPACE
 
-.L7:
-	mov	r10d, 1
-	jmp	.L8
+	cmp	r10w, 0				# проверяем, встретилось ли число (чтобы вставить пробелы)
+	jne	.NUMBERFLAG			# если число не закончилось (или не началось), переходим к метке NUMBERFLAG
 
-.L6:
-	cmp	r10d, 0
-	je	.L8
-	mov	r10d, 0
-	mov	rax, QWORD PTR -24[rbp]
-	mov	BYTE PTR [rax], 32
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], 32		# по адресу текущего символа записывается пробел (*pStr = ‘ ’)
+	add	r12, 1				# ++pStr
 
-	add	QWORD PTR -24[rbp], 1
+	xor 	edx, edx 			# очистка edx, в который запишется остаток от операции деления div
+	mov	eax, r14d			# делимое c в eax
+	mov 	ecx, 7				# делитель 7 в ecx
+	cdq					# преобразовывает c в 8-байтовое значение
+	idiv 	ecx				# c / 7
+	cmp	edx, 0				# сравниваем остаток от деления с нулём
+	jne	.NUMBERFLAG			# если не равен нулю, переход к метке NUMBERFLAG (минус не ставим)
 
-.L8:
-	mov	eax, r8d
-	mov	edx, eax
-	mov	rax, QWORD PTR -24[rbp]
-	mov	BYTE PTR [rax], dl
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], 45		# по адресу текущего символа записывается минус (*pStr = ‘-’)
+	add	r12, 1				# ++pStr
 
-	add	QWORD PTR -24[rbp], 1
+.NUMBERFLAG:
+	mov	r10w, 1				# isNumber = 1
+	jmp	.ADDSYMTOSTR			# переход к метке ADDSYMTOSTR
 
-.L5:
-	add	r9d, 1
+.ADDCLOSESPACE:
+	cmp	r10w, 0				# сравнение isNumber с нулём (не число)
+	je	.ADDSYMTOSTR			# если равен нулю, переход к метке ADDSYMTOSTR (не ставим пробел)
 
-.L3:
-	mov	eax, r9d
-	cmp	eax, DWORD PTR -4[rbp]
-	jl	.L9
-	mov	rax, QWORD PTR -24[rbp]
-	mov	BYTE PTR [rax], 0 	# по адресу последнего символа записывается конец строки (*pStr = ‘\0’)
+	mov	r10w, 0				# иначе isNumber = 0
 
-	leave				# освобождает стек на выходе из функции
-	ret				# выполняется выход из программы
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], 32		# по адресу текущего символа записывается пробел (*pStr = ‘ ’)
+	add	r12, 1				# ++pStr
+
+.ADDSYMTOSTR:
+	mov	edx, r14d			# скопировать содержимое r14d в edx
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], dl		# по адресу текущего символа записывается символ из файла (*pStr = c)
+	add	r12, 1				# ++pStr
+
+.INCINDEX:
+	add	r15d, 1				# ++i
+
+.LOOPBEGIN:
+	cmp	r15d, r11d			# сравнение i с n
+	jl	.GETCHAR			# если меньше, переход к метке GETCHAR (следующая итерация цикла-for)
+
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], 0		# по адресу последнего символа записывается конец строки (*pStr = ‘\0’)
+
+	leave					# освобождает стек на выходе из функции
+	ret					# выполняется выход из программы
 
 ```
 
