@@ -581,59 +581,122 @@ count_if_equals_element:
 random_generation.s
 
 ```assembly
-.intel_syntax noprefix
-.text
-.globl	random_generation
-.type	random_generation, @function
+асм
+
+
+.intel_syntax noprefix				# intel-синтаксис
+.globl random_generation			# точка запуска random_generation
+.type random_generation, @function		# объявление random_generation как функции
+
+.text						# секция кода
 
 random_generation:
-	push	rbp
-	mov	rbp, rsp
-	sub	rsp, 32
-	mov	QWORD PTR -24[rbp], rdi
+	push	rbp				# сохраняем rbp на стек
+	mov	rbp, rsp			# присваиваем rbp = rsp
 
-	mov	edi, 0				# 1-й агрумент -- 0 (NULL)
-	call	time@PLT			# time(NULL)
-	mov	edi, eax			# 1-й агрумент -- возвращаемое знач. из time(NULL)
-	call	srand@PLT			# srand(time(NULL))
-	call	rand@PLT			# вызов ф-и rand()
-	mov	ecx, DWORD PTR SIZEMAX[rip]	# ecx := SIZEMAX
-	idiv	ecx				# % SIZEMAX
+	mov	r12, rdi			# 1-й аргумент file_input — char *pStr (в свободном регистре r12)
 
-	mov	rax, QWORD PTR -24[rbp]		# rax := *n
-	mov	DWORD PTR [rax], edx		# n = edx (rand())
-	mov	eax, DWORD PTR [rax]		# eax := n
-	test	eax, eax			# логическое сравнение (< 1)
-	jg	.TOLOOP				# если *n > 1, переход к объявлению i и циклу (TOLOOP)
+	mov	edi, 0				# 1-й аргумент — 0 (NULL)
+	call	time@PLT			# вызов функции time(NULL)
+
+	mov	edi, eax			# 1-й аргумент — результат вызова time(NULL)
+	call	srand@PLT			# вызов функции srand(time(NULL))
+	call	rand@PLT			# вызов функции rand()
+
+	mov	edx, SIZEMAX[rip]		# 
+	mov	ecx, edx			# 
+	shr	ecx, 31				# 
+	add	edx, eco			# 
+	sar	edx				# 
+	mov	ecx, edx			# 
+	idiv	ecx				# 
+
+	mov	r11, edx			# n = rand() % (SIZEMAX / 2)
+	cmp	r11, 0				# сравниваем с 0
+	jg	.L2				#если больше или равен, переходим к метке
+	add	r11, 1				# иначе ++n
+
+.L2:
+	mov	r10d, 0 			# short isNumber = 0;
+	mov	r9d, 0				# 
+	jmp	.L3				# 
+
+.L9:
+	call	rand@PLT
+	mov	ecx, VALUEMAX[rip]
+	idiv	ecx				# ecx % VALUEMAX (% 128)
+	mov	r8d, edx
+	cmp	r8d, 31
+	jg	.L4
+	sub	r9d, 1
+	jmp	.L5
+
+.L4:
+	cmp	r8d, 47
+	jle	.L6
+	cmp	r8d, 57
+	jg	.L6
+	cmp 	r10d, 0
+	jne	.L7
 	mov	rax, QWORD PTR -24[rbp]
-	mov	eax, DWORD PTR [rax]		# eax := n
-	lea	edx, 1[rax]			# ++*n
-	mov	rax, QWORD PTR -24[rbp]		# rax := *n
-	mov	DWORD PTR [rax], edx		# n = edx
+	mov	BYTE PTR [rax], 32
 
-.TOLOOP:
-	mov	r12d, 0				# i = 0
-	jmp	.LOOP				# переход к циклу LOOP
+	add	QWORD PTR -24[rbp], 1
 
-.GENERATEELEM:
-	call	rand@PLT			# вызов ф-и rand()
-	mov	ecx, VALUEMAX[rip]		# ecx := VALUEMAX
-	idiv	ecx				# % VALUEMAX
-	mov	ecx, edx			#
-	mov	eax, r12d			#
+	mov	edx, r8d
+	movsx	rax, edx
+	imul	rax, rax, -1840700269
+	shr	rax, 32
+	add	eax, edx
+	sar	eax, 2
+	mov	ecx, edx
+	sar	ecx, 31
+	sub	eax, ecx
+	mov	ecx, eax
+	sal	ecx, 3
+	sub	ecx, eax
+	mov	eax, edx
+	sub	eax, ecx
+	test	eax, eax
+	jne	.L7
+	mov	rax, QWORD PTR -24[rbp]
+	mov	BYTE PTR [rax], 45
 
-	lea	rdx, 0[0 + rax * 4]		# 		
-	lea	rax, ARRAY_A[rip]		#	
-	mov	DWORD PTR [rdx + rax], ecx	# 	
-	add	r12d, 1				# ++i
+	add	QWORD PTR -24[rbp], 1
 
-.LOOP:
-	mov	rax, QWORD PTR -24[rbp]		# rax := *n
-	mov	eax, DWORD PTR [rax]		# eax := n
-	cmp	r12d, eax			# сравнение i и n
-	jl	.GENERATEELEM			# если i < n, переход к GENERATEELEM
-	leave					# очистка стека
-	ret					# выполняется выход из программы
+.L7:
+	mov	r10d, 1
+	jmp	.L8
+
+.L6:
+	cmp	r10d, 0
+	je	.L8
+	mov	r10d, 0
+	mov	rax, QWORD PTR -24[rbp]
+	mov	BYTE PTR [rax], 32
+
+	add	QWORD PTR -24[rbp], 1
+
+.L8:
+	mov	eax, r8d
+	mov	edx, eax
+	mov	rax, QWORD PTR -24[rbp]
+	mov	BYTE PTR [rax], dl
+
+	add	QWORD PTR -24[rbp], 1
+
+.L5:
+	add	r9d, 1
+
+.L3:
+	mov	eax, r9d
+	cmp	eax, DWORD PTR -4[rbp]
+	jl	.L9
+	mov	rax, QWORD PTR -24[rbp]
+	mov	BYTE PTR [rax], 0 	# по адресу последнего символа записывается конец строки (*pStr = ‘\0’)
+
+	leave				# освобождает стек на выходе из функции
+	ret				# выполняется выход из программы
 
 ```
 
