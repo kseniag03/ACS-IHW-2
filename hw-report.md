@@ -410,6 +410,147 @@ main:					# тело main
 	leave					# освобождает стек на выходе из функции main
 	ret					# выполняется выход из программы
 
+
+
+
+.intel_syntax noprefix				# intel-синтаксис
+.globl main					# точка запуска main
+.type main, @function				# объявление main как функции
+
+.globl	SIZEMAX					# объявление глобальной константы
+.globl	VALUEMAX				# объявление глобальной константы
+
+.section .data					# секция объявления переменных 
+	SIZEMAX:	.long		100000
+	VALUEMAX:	.long		128
+	noArg:		.string		"No arguments\n"
+	showArg:	.string		"arg = %s\n"
+	inputFileName:	.string		"input.txt"
+	outputFileName:	.string		"output.txt"
+	inputData:	.string		"Input: %s\n"
+	outputData:	.string		"Output: %s\n"
+	elapsed:	.string		"Elapsed: %ld ns\n"
+
+.text						# секция кода
+
+main:
+	push	rbp				# сохраняем rbp на стек
+	mov	rbp, rsp			# присваиваем rbp = rsp
+	sub	rsp, 100096
+
+	mov	DWORD PTR -100084[rbp], edi		# argc
+	mov	QWORD PTR -100096[rbp], rsi		# argv
+
+	mov	eax, 100000
+	mov	rdi, rax
+	call	malloc@PLT
+
+	mov	QWORD PTR -8[rbp], rax			# char *str
+	cmp	DWORD PTR -100084[rbp], 1
+	jle	.NOARGS
+
+	mov	rax, QWORD PTR -100096[rbp]
+	mov	rax, QWORD PTR 8[rax]
+	mov	r12, rax			# arg
+	
+	lea	rdi, showArg[rip]
+	mov	rsi, r12
+	call	printf@PLT
+
+	mov	rdi, r12
+	call	atoi@PLT
+
+	mov	r13d, eax			# option
+	cmp	r13d, 1
+	jne	.FILEINPUT
+
+	mov	rdi, QWORD PTR -8[rbp]
+	mov	esi, 100000
+	mov	rdx, QWORD PTR stdin[rip]
+	call	fgets@PLT
+
+	jmp	.DOTASK
+
+.FILEINPUT:
+	cmp	r13d, 2
+	jne	.RANDOM
+
+	mov	rdi, QWORD PTR -8[rbp]
+	lea	rsi, inputFileName[rip]
+	call	file_input@PLT
+
+	test	eax, eax
+	je	.DOTASK
+
+	mov	eax, 1				# return 1
+	jmp	.EXIT
+
+.RANDOM:
+	mov	rdi, QWORD PTR -8[rbp]
+	call	random_generation@PLT
+
+	jmp	.DOTASK
+
+.NOARGS:
+	lea	rdi, noArg[rip]
+	call	printf@PLT
+
+	mov	eax, 0				# return 0
+	jmp	.EXIT
+
+.DOTASK:
+	lea	rdi, inputData[rip]
+	mov	rsi, QWORD PTR -8[rbp]
+	call	printf@PLT
+
+	mov	edi, 1
+	lea	rsi, -64[rbp]
+	call	clock_gettime@PLT
+
+	mov	rax, QWORD PTR -8[rbp]
+	mov	r15, rax			# pStr
+	mov	QWORD PTR -100080[rbp], 0
+	mov	QWORD PTR -100072[rbp], 0
+
+	lea	rdi, -100064[rbp]
+	mov	esi, 0
+	mov	edx, 99984
+	call	memset@PLT
+
+	mov	rdi, r15			# 
+	lea	rsi, -100080[rbp]		# ans
+	call	form_new_str@PLT
+
+	mov	edi, 1
+	lea	rsi, -80[rbp]			# end
+	call	clock_gettime@PLT
+
+	mov	rdi, QWORD PTR -80[rbp]		# end.tv_sec
+	mov	rsi, QWORD PTR -72[rbp]		# end.tv_nsec
+	mov	rdx, QWORD PTR -64[rbp]		# start.tv_sec
+	mov	rcx, QWORD PTR -56[rbp]		# start.tv_nsec
+	call	timespec_difference@PLT
+	mov	r14, rax			# elapsed_ns
+
+	lea	rdi, elapsed[rip]
+	mov	rsi, r14			# 
+	call	printf@PLT
+
+	lea	rdi, outputData[rip]
+	lea	rsi, -100080[rbp]		# ans
+	call	printf@PLT
+
+	lea	rdi, -100080[rbp]
+	lea	rsi, outputFileName[rip]
+	call	file_output@PLT
+
+	mov	eax, 0
+
+.EXIT:
+	leave					# освобождает стек на выходе из функции
+	ret					# выполняется выход из программы
+
+
 ```
 <br>
 
@@ -538,6 +679,234 @@ file_output:
 form_new_str.s
 
 ```assembly
+
+
+
+.intel_syntax noprefix				# intel-синтаксис
+.globl form_new_str				# точка запуска form_new_str
+.type form_new_str, @function			# объявление form_new_str как функции
+
+.text						# секция кода
+
+form_new_str:
+	push	rbp
+	mov	rbp, rsp
+	sub	rsp, 304
+
+	mov	QWORD PTR -296[rbp], rdi	# pStr
+	mov	QWORD PTR -304[rbp], rsi	# ans
+
+	mov	WORD PTR -2[rbp], 0
+	mov	WORD PTR -4[rbp], 0
+
+	mov	QWORD PTR -272[rbp], 0
+	mov	QWORD PTR -264[rbp], 0
+	mov	QWORD PTR -256[rbp], 0
+	mov	QWORD PTR -248[rbp], 0
+	mov	QWORD PTR -240[rbp], 0
+	mov	QWORD PTR -232[rbp], 0
+	mov	QWORD PTR -224[rbp], 0
+	mov	QWORD PTR -216[rbp], 0
+	mov	QWORD PTR -208[rbp], 0
+	mov	QWORD PTR -200[rbp], 0
+	mov	QWORD PTR -192[rbp], 0
+	mov	QWORD PTR -184[rbp], 0
+	mov	QWORD PTR -176[rbp], 0
+	mov	QWORD PTR -168[rbp], 0
+	mov	QWORD PTR -160[rbp], 0
+	mov	QWORD PTR -152[rbp], 0
+	mov	QWORD PTR -144[rbp], 0
+	mov	QWORD PTR -136[rbp], 0
+	mov	QWORD PTR -128[rbp], 0
+	mov	QWORD PTR -120[rbp], 0
+	mov	QWORD PTR -112[rbp], 0
+	mov	QWORD PTR -104[rbp], 0
+	mov	QWORD PTR -96[rbp], 0
+	mov	QWORD PTR -88[rbp], 0
+	mov	QWORD PTR -80[rbp], 0
+	mov	QWORD PTR -72[rbp], 0
+	mov	QWORD PTR -64[rbp], 0
+	mov	QWORD PTR -56[rbp], 0
+	mov	QWORD PTR -48[rbp], 0
+	mov	QWORD PTR -40[rbp], 0
+	mov	QWORD PTR -32[rbp], 0
+	mov	QWORD PTR -24[rbp], 0
+
+	jmp	.L2
+
+.L11:
+	mov	rax, QWORD PTR -296[rbp]
+	movzx	eax, BYTE PTR [rax]
+	cmp	al, 45
+	jne	.L3
+
+	mov	rax, QWORD PTR -296[rbp]
+	add	rax, 1
+	movzx	eax, BYTE PTR [rax]
+	cmp	al, 47
+	jle	.L3
+
+	mov	rax, QWORD PTR -296[rbp]
+	add	rax, 1
+	movzx	eax, BYTE PTR [rax]
+	cmp	al, 57
+	jg	.L3
+
+	mov	WORD PTR -4[rbp], 1
+
+.L3:
+	mov	rax, QWORD PTR -296[rbp]
+	movzx	eax, BYTE PTR [rax]
+	cmp	al, 47
+	jle	.L4
+
+	mov	rax, QWORD PTR -296[rbp]
+	movzx	eax, BYTE PTR [rax]
+	cmp	al, 57
+	jg	.L4
+
+	mov	WORD PTR -2[rbp], 1
+	mov	rax, QWORD PTR -296[rbp]
+	movzx	eax, BYTE PTR [rax]
+	mov	BYTE PTR -274[rbp], al
+	mov	BYTE PTR -273[rbp], 0
+
+	lea	rdi, -272[rbp]
+	lea	rsi, -274[rbp]
+	call	strcat@PLT
+
+	jmp	.L5
+
+.L4:
+	cmp	WORD PTR -2[rbp], 0
+	je	.L5
+
+	mov	WORD PTR -2[rbp], 0
+	jmp	.L6
+
+.L8:
+	lea	rdi, -272[rbp]
+	call	strlen@PLT
+
+	mov	rdx, rax
+	lea	rax, -272[rbp]
+	add	rax, 1
+
+	lea	rcx, -272[rbp]
+	mov	rsi, rax
+	mov	rdi, rcx
+	call	memmove@PLT
+
+.L6:
+	movzx	eax, BYTE PTR -272[rbp]
+	cmp	al, 48
+	jne	.L7
+
+	lea	rdi, -272[rbp]
+	call	strlen@PLT
+
+	cmp	rax, 1
+	ja	.L8
+
+.L7:
+	cmp	WORD PTR -4[rbp], 0
+	je	.L9
+
+	movzx	eax, BYTE PTR -272[rbp]
+	cmp	al, 48
+	jne	.L10
+
+	lea	rdi, -272[rbp]
+	call	strlen@PLT
+
+	cmp	rax, 1
+	je	.L9
+
+.L10:
+	lea	rdi, -272[rbp]
+	call	strlen@PLT
+
+	lea	rdx, 1[rax]
+	lea	rax, -272[rbp]
+	add	rax, 1
+	lea	rcx, -272[rbp]
+	mov	rsi, rcx
+	mov	rdi, rax
+	call	memmove@PLT
+
+	mov	BYTE PTR -272[rbp], 45
+	lea	rdi, -272[rbp]
+	call	strlen@PLT
+
+	lea	rdx, 1[rax]
+	lea	rax, -272[rbp]
+	add	rax, 1
+	lea	rcx, -272[rbp]
+	mov	rsi, rcx
+	mov	rdi, rax
+	call	memmove@PLT
+
+	mov	BYTE PTR -272[rbp], 40
+	lea	rdi, -272[rbp]
+	call	strlen@PLT
+
+	mov	rdx, rax
+	lea	rax, -272[rbp]
+	add	rax, rdx
+	mov	WORD PTR [rax], 41
+
+.L9:
+	mov	rdi, QWORD PTR -304[rbp]
+	lea	rsi, -272[rbp]
+	call	strcat@PLT
+
+	mov	rdi, QWORD PTR -304[rbp]
+	call	strlen@PLT
+
+	mov	rdx, rax
+	mov	rax, QWORD PTR -304[rbp]
+	add	rax, rdx
+	mov	WORD PTR [rax], 43
+	mov	BYTE PTR -272[rbp], 0
+	mov	WORD PTR -4[rbp], 0
+
+.L5:
+	add	QWORD PTR -296[rbp], 1
+
+.L2:
+	mov	rax, QWORD PTR -296[rbp]
+	movzx	eax, BYTE PTR [rax]
+	test	al, al
+	jne	.L11
+
+	cmp	WORD PTR -2[rbp], 0
+	je	.L12
+
+	mov	rdi, QWORD PTR -304[rbp]
+	lea	rsi, -272[rbp]
+	call	strcat@PLT
+
+	mov	rdi, QWORD PTR -304[rbp]
+	call	strlen@PLT
+
+	mov	rdx, rax
+	mov	rax, QWORD PTR -304[rbp]
+	add	rax, rdx
+	mov	WORD PTR [rax], 43
+	mov	BYTE PTR -272[rbp], 0
+
+.L12:
+	mov	rdi, QWORD PTR -304[rbp]
+	call	strlen@PLT
+
+	lea	rdx, -1[rax]
+	mov	rax, QWORD PTR -304[rbp]
+	add	rax, rdx
+	mov	BYTE PTR [rax], 0
+
+	leave					# освобождает стек на выходе из функции
+	ret					# выполняется выход из программы
+
 
 ```
 
