@@ -688,7 +688,7 @@ form_new_str.s
 form_new_str:
 	push	rbp				# сохраняем rbp на стек
 	mov	rbp, rsp			# присваиваем rbp = rsp
-	sub	rsp, 304			# выделяем память на стеке
+	sub	rsp, 274			# выделяем память на стеке
 
 	mov	r12, rdi			# 1-й аргумент — char *pStr (в свободном регистре r12)
 	mov	r13, rsi			# 2-й аргумент — char ans[] (в свободном регистре r13)
