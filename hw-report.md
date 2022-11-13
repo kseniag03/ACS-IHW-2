@@ -23,7 +23,7 @@ ________________________
 
 ### 5. Результаты тестовых прогонов для различных исходных данных. <br> ###
 
-Тесты можно посмотреть здесь: ACS-IHW-1/tests <br>
+Тесты можно посмотреть здесь: ACS-IHW-2/tests <br>
 
 Ввод с консоли: <br>
 ![Screenshot from 2022-11-06 23-30-44](https://user-images.githubusercontent.com/114473740/200193764-e0978872-eaaa-40b5-9d06-a2fab6d52c70.png) <br>
@@ -39,7 +39,7 @@ ________________________
 
 ### 6. Исходные тексты программы на языке C. <br> ###
 
-Можно также посмотреть здесь: ACS-IHW-1/codes (main.c) и ACS-IHW-1/codes/funcs (все подпрограммы) <br>
+Можно также посмотреть здесь: ACS-IHW-2/codes <br>
 
 main.c -- основная функция
 ```c
@@ -261,125 +261,116 @@ ________________________
 
 ### 7. Тексты программы на языке ассемблера, разработанной вручную или полученной после компиляции и расширенной комментариями. <br> ###
 
-Можно также посмотреть здесь: ACS-IHW-1/codes/edited-asm-code <br>
+Можно также посмотреть здесь: ACS-IHW-2/codes/edited-asm-code <br>
 
 main.s
 
 ```assembly
-.intel_syntax noprefix			# intel-синтаксис
-.globl main				# точка запуска main
-.type main, @function			# объявление main как функции
+.intel_syntax noprefix				# intel-синтаксис
+.globl main					# точка запуска main
+.type main, @function				# объявление main как функции
 
-.globl	SIZEMAX				# объявление глобальной константы
-.globl	VALUEMAX			# объявление глобальной константы
+.globl	SIZEMAX					# объявление глобальной константы
+.globl	VALUEMAX				# объявление глобальной константы
 
-.global ARRAY_A				# объявление глобального массива (входные данные)
-.global ARRAY_B				# объявление глобальной массива (выходные данные)
-
-.section .data				# секция объявления переменных 
+.section .data					# секция объявления переменных 
 	SIZEMAX:	.long		100000
-	VALUEMAX:	.long		100000
-	ARRAY_A:	.zero		400000
-	ARRAY_B:	.zero		400000
-	showArg:	.string		"arg = %s"
+	VALUEMAX:	.long		128
+	noArg:		.string		"No arguments\n"
+	showArg:	.string		"arg = %s\n"
 	inputFileName:	.string		"input.txt"
 	outputFileName:	.string		"output.txt"
-	noArg:		.string		"No arguments\n"
+	inputData:	.string		"Input: %s\n"
+	outputData:	.string		"Output: %s\n"
 	elapsed:	.string		"Elapsed: %ld ns\n"
 
-.text					# секция кода
+.text						# секция кода
 
-main:					# тело main
+main:
 	push	rbp				# сохраняем rbp на стек
 	mov	rbp, rsp			# присваиваем rbp = rsp
-	sub	rsp, 96				# rsp -= 96 (выделение памяти на стеке)
+	sub	rsp, 100096
 
-	mov	DWORD PTR -84[rbp], edi		# 1-й аргумент main — argc (в стеке на -84)
-	mov	QWORD PTR -96[rbp], rsi		# 2-й аргумент main — argv (в стеке на -96)
-	cmp	DWORD PTR -84[rbp], 1		# сравниваем число аргументов командной строки (argc) с 1
+	mov	DWORD PTR -100084[rbp], edi	# 1-й аргумент main — argc (в стеке на -100084)
+	mov	QWORD PTR -100096[rbp], rsi	# 2-й аргумент main — argv (в стеке на -100096)
+
+	mov	eax, 100000			# eax = 100000
+	mov	rdi, rax			# 1-й аргумент — 100000
+	call	malloc@PLT			# выделяем память под строку (str = (char*)malloc(SIZEMAX))
+
+	mov	QWORD PTR -8[rbp], rax		# char *str (в стеке на -8)
+	cmp	DWORD PTR -100084[rbp], 1	# сравнение argc с 1
 	jle	.NOARGS				# если argc <= 1, переходим к метке NOARGS
 
-	lea	rdi, showArg[rip]		# 1-й аргумент для вывода варианта ввода — строка "arg = %s" (формат)
-	mov	rax, QWORD PTR -96[rbp]		# rax := argv
-	mov	rax, QWORD PTR 8[rax]		# rax := argv[1]
-	mov	QWORD PTR -8[rbp], rax		# arg := rax
-	mov	rsi, QWORD PTR -8[rbp]		# 2-й аргумент для вывода варианта ввода — arg
-	call	printf@PLT			# вызов функции печати для вывода ответа, т.е. printf("arg = %s", arg)
-	mov	edi, 10				# 1-й аргумент для функции печати символа — перевод строки (код 10)
-	call	putchar@PLT			# вызов функции печати символа перевода строки, т.е. printf("\n")
+	mov	rax, QWORD PTR -100096[rbp]	# rax = argv
+	mov	rax, QWORD PTR 8[rax]		# rax = argv[0]
+	mov	r12, rax			# arg = argv[0], локальную переменную записываем в свободный регистр r12
+	
+	lea	rdi, showArg[rip]		# 1-й аргумент — "arg = %s\n"
+	mov	rsi, r12			# 2-й аргумент — arg = argv[0]
+	call	printf@PLT			# printf("arg = %s\n", arg)
 
-	mov	rdi, QWORD PTR -8[rbp]		# 1-й аргумент для функции перевода в int — arg
-	call	atoi@PLT			# вызов функции atoi для перевода в аргумент типа int, т.е. atoi(argv[1])
-	mov	DWORD PTR -12[rbp], eax		# option := eax (результат выполнения функции atoi(argv[1]))
+	mov	rdi, r12			# 1-й аргумент — arg
+	call	atoi@PLT			# atoi(arg)
 
-	cmp	DWORD PTR -12[rbp], 1		# сравниваем option с 1
-	jne	.FILEINPUT			# если option не равен 1, переходим к метке FILEINPUT
+	mov	r13d, eax			# option = atoi(arg) (в свободном регистре r13d, double word)
+	cmp	r13d, 1				# сравнение option с 1
+	jne	.FILEINPUT			# если не равен 1, переходим к файловому выводу (метка FILEINPUT)
 
-	lea	rdi, -36[rbp]			# rdi := -36 на стеке, т.е. 1-й аргумент для ввода из командной строки — &n
-	mov	rsi, QWORD PTR -96[rbp]		# 2-й аргумент для ввода из командной строки — argv
-	call	command_line_input@PLT		# вызов функции ввода данных из командной строки, т.е. command_line_input(&n, argv)
+	mov	rdi, QWORD PTR -8[rbp]		# 1-й аргумент — str
+	mov	esi, 100000			# 2-й аргумент — 100000
+	mov	rdx, QWORD PTR stdin[rip]	# 3-й аргумент — stdin (поток ввода)
+	call	fgets@PLT			# вывод с консоли: fgets(str, SIZEMAX, stdin)
 
-	test	eax, eax			# проверяется код возврата (логическое сравнение)
-	je	.FILLARRAYB			# если равны, переход к метке FILLARRAYB (если command_line_input не завершился с ошибкой и вернул 0)
-	mov	eax, 1				# иначе return 1
+	jmp	.DOTASK				# переход к метке DOTASK
 
-	jmp	.EXIT				# переход к метке EXIT
+.FILEINPUT:
+	cmp	r13d, 2				# сравнение option с 2
+	jne	.RANDOM				# если не равен 2, переходим к псевдослучайной генерации данных (метка RANDOM)
 
-.FILEINPUT:				# ввод из файла
-	cmp	DWORD PTR -12[rbp], 2		# сравниваем option с 2
-	jne	.RANDOM				# если option не равен 2, переходим к метке RANDOM
+	mov	rdi, QWORD PTR -8[rbp]		# 1-й аргумент — str
+	lea	rsi, inputFileName[rip]		# 2-й аргумент — "input.txt"
+	call	file_input@PLT			# file_input(str, "input.txt")
 
-	lea	rdi, -36[rbp]			# 1-й аргумент для ввода из файла — &n
-	lea	rsi, inputFileName[rip]		# 2-й аргумент для ввода из файла — "input.txt"
-	call	file_input@PLT			# вызов функции ввода данных из файла, т.е. file_input(&n, "input.txt")
+	test	eax, eax			# проверяем, что file_input(str, "input.txt") завершается без ошибок (с кодом 0)
+	je	.DOTASK				# если равно 0, переход к метке DOTASK
 
-	test	eax, eax			# проверяется код возврата (логическое сравнение)
-	je	.FILLARRAYB			# если равны, переход к метке FILLARRAYB (если file_input не завершился с ошибкой и вернул 0)
-	mov	eax, 1				# иначе return 1
+	mov	eax, 1				# return 1
+	jmp	.EXIT				# переход к выходу из программы
 
-	jmp	.EXIT				# переход к метке EXIT
+.RANDOM:
+	mov	rdi, QWORD PTR -8[rbp]		# 1-й аргумент — str
+	call	random_generation@PLT		# random_generation(str)
 
-.RANDOM:				# псевдослучайная генерация массива
-	lea	rdi, -36[rbp]			# 1-й аргумент для генерации — &n
-	call	random_generation@PLT		# вызов функции случайной генерации массива, т.е. random_generation(&n);
+	jmp	.DOTASK				# переход к метке DOTASK
 
-	mov	edi, DWORD PTR -36[rbp]		# 1-й аргумент для вывода — &n
-	lea	rsi, ARRAY_A[rip]		# 2-й аргумент для вывода — сгенерированный исходный массив 
-	call	command_line_output@PLT		# вызов функции вывода исходного сгенерированного массива, т.е. command_line_output(n, ARRAY_A)
+.NOARGS:
+	lea	rdi, noArg[rip]			# 1-й аргумент — "No arguments\n"
+	call	printf@PLT			# printf("No arguments\n")
 
-	jmp	.FILLARRAYB			# переход к метке FILLARRAYB
-
-.NOARGS:				# недостаточно аргументов в командной строке для работы программы
-	lea	rdi, noArg[rip]			# 1-й аргумент для вывода сообщения — строка "No arguments"
-	call	printf@PLT			# вызов функции печати для вывода ответа, т.е. printf("No arguments\n")
 	mov	eax, 0				# return 0
+	jmp	.EXIT				# переход к выходу из программы
 
-	jmp	.EXIT				# переход к метке EXIT
+.DOTASK:
+	lea	rdi, inputData[rip]		# 1-й аргумент — "Input: %s\n"
+	mov	rsi, QWORD PTR -8[rbp]		# 2-й аргумент — str
+	call	printf@PLT			# printf("Input: %s\n", str)
 
-.FILLARRAYB:
 	mov	edi, 1				# 1-й аргумент для запуска счётчика — 1 (CLOCK_MONOTONIC)
 	lea	rsi, -64[rbp]			# 2-й аргумент для запуска счётчика — &start
-	call	clock_gettime@PLT		# вызов функции подсчёта времени до заполнения массива B, т.е. clock_gettime(CLOCK_MONOTONIC, &start)
+	call	clock_gettime@PLT		# вызов функции подсчёта времени до формирования строки, т.е. clock_gettime(CLOCK_MONOTONIC, &start)
 
-	mov	edi, DWORD PTR -36[rbp]		# 1-й аргумент для поиска минимума — n
-	lea	rsi, ARRAY_A[rip]		# 2-й аргумент для поиска минимума — ARRAY_A
-	call	get_min_from_array@PLT		# вызов функции поиска минимума, т.е. get_min_from_array(n, ARRAY_A);
-	mov	DWORD PTR -16[rbp], eax		# min := результат функции get_min_from_array (в стеке на -16)
+	mov	r15, QWORD PTR -8[rbp]		# pStr = str, локальную переменную записываем в свободный регистр r15
+	mov	QWORD PTR -100080[rbp], 0	# char ans[100000] = ""
 
-	mov	edi, DWORD PTR -36[rbp]		# 1-й аргумент для подсчёта — n
-	lea	rsi, ARRAY_A[rip]		# 2-й аргумент для подсчёта — ARRAY_A
-	mov	edx, DWORD PTR -16[rbp]		# 3-й аргумент для поиска минимума — min
-	call	count_if_equals_element@PLT	# вызов функции ..., т.е. count_if_equals_element(n, ARRAY_A, min);
-	mov	DWORD PTR -20[rbp], eax		# size := результат функции count_if_equals_element (в стеке на -20)
+	lea	rdi, -100064[rbp]		# 1-й аргумент — указатель на заполняемый массив ans (-100080 + 16 = -100064 (qword))
+	mov	esi, 0				# 2-й аргумент — 0 (код символа для заполнения)
+	mov	edx, 99984			# 3-й аргумент — 99984 (размер заполняемой части массива в байтах)
+	call	memset@PLT			# memset (ans, 0, 99984) — заполнение массива
 
-	mov	eax, DWORD PTR -36[rbp]		# eax := n
-	sub	eax, DWORD PTR -20[rbp]		# eax := n - size
-	mov	DWORD PTR -20[rbp], eax		# size := eax
-
-	mov	edi, DWORD PTR -36[rbp]		# 1-й аргумент для заполнения — n
-	mov	esi, DWORD PTR -20[rbp]		# 2-й аргумент для заполнения — size
-	mov	edx, DWORD PTR -16[rbp]		# 3-й аргумент для заполнения — min
-	call	fill_ARRAY_B@PLT		# вызов функции заполнения массива B, т.е. fill_ARRAY_B(n, size, min)
+	mov	rdi, r15			# 1-й аргумент — pStr
+	lea	rsi, -100080[rbp]		# 2-й аргумент — ans
+	call	form_new_str@PLT		# form_new_str(pStr, ans)
 
 	mov	edi, 1				# 1-й аргумент для запуска счётчика — 1 (CLOCK_MONOTONIC)
 	lea	rsi, -80[rbp]			# 2-й аргумент для запуска счётчика — &end
@@ -389,216 +380,346 @@ main:					# тело main
 	mov	rsi, QWORD PTR -72[rbp]		# 2-й аргумент для подсчёта времени — end.tv_nsec
 	mov	rdx, QWORD PTR -64[rbp]		# 3-й аргумент для подсчёта времени — start.tv_sec
 	mov	rcx, QWORD PTR -56[rbp]		# 4-й аргумент для подсчёта времени — start.tv_nsec
-	call	timespec_difference@PLT		# вызов функции для вычисления времени заполнения массива B, т.е. timespec_difference(end, start) (4 аргумента, т.к. передаются структуры с 2-мя полями)
-	mov	QWORD PTR -32[rbp], rax		# elapsed_ns := rax (результат выполнения функции timespec_difference)
+	call	timespec_difference@PLT		# вызов функции для вычисления времени выполнения задания, т.е. timespec_difference(end, start) (4 аргумента, т.к. передаются структуры с 2-мя полями)
+	mov	r14, rax			# elapsed_ns = rax (результат выполнения функции timespec_difference), локальную переменную записываем в свободный регистр r14
 
-	mov	edi, DWORD PTR -20[rbp]		# 1-й аргумент для вывода — size
-	lea	rsi, ARRAY_B[rip]		# 2-й аргумент для вывода — ARRAY_B
-	call	command_line_output@PLT		# вызов функции вывода полученного массива, т.е. command_line_output(size, ARRAY_B)
+	lea	rdi, elapsed[rip]		# 1-й аргумент — "Elapsed: %ld ns\n"
+	mov	rsi, r14			# 2-й аргумент — elapsed_ns
+	call	printf@PLT			# printf("Elapsed: %ld ns\n", elapsed_ns)
 
-	mov	edi, DWORD PTR -20[rbp]		# 1-й аргумент для вывода — size
-	lea	rsi, outputFileName[rip]	# 2-й аргумент для вывода — "output.txt"
-	call	file_output@PLT			# вызов функции вывода полученного массива в выходной файл, т.е. file_output(size, "output.txt")
+	lea	rdi, outputData[rip]		# 1-й аргумент — "Output: %s\n"
+	lea	rsi, -100080[rbp]		# 2-й аргумент — ans
+	call	printf@PLT			# printf("Output: %s\n", ans)
 
-	lea	rdi, elapsed[rip]		# 1-й аргумент для вывода времени — строка "Elapsed: %ld ns\n"
-	mov	rsi, QWORD PTR -32[rbp]		# 2-й аргумент для вывода времени — elapsed_ns
-	call	printf@PLT			# вызов функции печати для вывода ответа, т.е. printf("Elapsed: %ld ns\n", elapsed_ns)
+	lea	rdi, -100080[rbp]		# 1-й аргумент — ans
+	lea	rsi, outputFileName[rip]	# 2-й аргумент — "output.txt"
+	call	file_output@PLT			# file_output(ans, "output.txt")
 
 	mov	eax, 0				# return 0
 
-.EXIT:					# выход из программы
-	leave					# освобождает стек на выходе из функции main
+.EXIT:
+	leave					# освобождает стек на выходе из функции
 	ret					# выполняется выход из программы
 
 ```
 <br>
 
-Стек переменных: <br>
-![main_stack](https://user-images.githubusercontent.com/114473740/197405043-2ef52153-8269-4fa7-9005-f7174bb80fa9.jpg) <br>
-<br>
-
-command_line_input.s
+file_input.s
 
 ```assembly
-.intel_syntax noprefix			# intel-синтаксис
-.globl command_line_input		# точка запуска command_line_input
-.type command_line_input, @function	# объявление command_line_input как функции
+.intel_syntax noprefix				# intel-синтаксис
+.globl file_input				# точка запуска file_input
+.type file_input, @function			# объявление file_input как функции
 
-.section .data				# секция объявления переменных
-	wrongElemsNum:	.string		"The num of elems in arr must be from 1 to %d\n"
-	notEnough:	.string		"Not enough elems in arr\n"
+.section .data					# секция объявления переменных
+	readFile:	.string		"r"
+	notOpenFile:	.string		"Unable to open file '%s'\n"
 
-.text					# секция кода
+.text						# секция кода
 
-command_line_input:			# тело command_line_input
-	push	rbp					# сохраняем rbp на стек
-	mov	rbp, rsp				# присваиваем rbp = rsp
-	sub	rsp, 32					# rsp -= 32 (выделение памяти на стеке)
-
-	mov	QWORD PTR -24[rbp], rdi			# 1-й аргумент command_line_input — int *n (в стеке на -24)
-	mov	QWORD PTR -32[rbp], rsi			# 2-й аргумент command_line_input — char** argv (в стеке на -32)
-
-	mov	rax, QWORD PTR -32[rbp]			# rax := argv
-	mov	rdi, QWORD PTR [rax + 16]		# rdi := argv[2] (1-й аргумент функции)
-	call	atoi@PLT				# вызов функции atoi для перевода в аргумент типа int, т.е. atoi(argv[2])
-
-	mov	rdx, QWORD PTR -24[rbp]			# rdx := *n
-	mov	DWORD PTR [rdx], eax			# n := результат вызова функции atoi
-	mov	eax, DWORD PTR [rdx]			# eax := n
-	cmp	eax, 0					# сравнение n и 0
-	jle	.WRONGN					# если n <= 0, переходим к метке WRONGN
-	cmp	eax, SIZEMAX[rip]			# иначе сравниваем n и SIZEMAX
-	jle	.BEFORELOOP				# если n <= SIZEMAX, переходим к метке BEFORELOOP
-
-.WRONGN:				# введен неверный размер массива
-	lea	rdi, wrongElemsNum[rip]			# 1-й аргумент функции — строка "The num of elems in arr must be from 1 to %d\n"
-	mov	esi, SIZEMAX[rip]			# 2-й аргумент функции — константа SIZEMAX 
-	call	printf@PLT				# вызов функции печати для вывода сообщения об ошибке, т.е. printf("The num of elems in arr must be from 1 to %d\n", SIZEMAX)		
-
-	mov	eax, 1					# return 1
-	jmp	.EXIT					# переход к метке EXIT
-
-.BEFORELOOP:				# объявляем индекс перед циклом
-	mov	r12d, 0					# i := 0 (в свободном регистре r12)
-	jmp	.LOOPFOR				# переход к метке LOOPFOR
-
-.CHECKINPUTELEMS:
-	mov	eax, r12d				# eax := i
-	add	rax, 3					# rax += 3
-	lea	rdx, 0[0 + rax * 8]			# rdx := (rax + 3) * 8
-
-	mov	rax, QWORD PTR -32[rbp]			# rax := argv
-	add	rax, rdx				# rax += rdx
-	mov	rax, QWORD PTR [rax]			# rax := argv[i + 3]
-
-	test	rax, rax				# логическое сравнене — проверка, является ли элемент NULL
-	jne	.ARRAYELEMS				# если не NULL, переход к метке ARRAYELEMS
-
-	lea	rdi, notEnough[rip]			# 1-й аргумент функции — строка "Not enough elems in arr\n"
-	call	printf@PLT				# вызов функции печати для вывода сообщения об ошибке, т.е. printf("Not enough elems in arr\n")
-
-	mov	eax, 1 					# return 1;
-	jmp	.EXIT					# переход к метке EXIT
-
-.ARRAYELEMS:
-	mov	eax, r12d				# eax := i
-	add	rax, 3					# rax += 3
-	lea	rdx, 0[0 + rax * 8]			# rdx := (rax + 3) * 8
-
-	mov	rax, QWORD PTR -32[rbp]			# rax := argv
-	add	rax, rdx				# rax += rdx
-	mov	rdi, QWORD PTR [rax]			# rdi := argv[i + 3] (1-й аргумент функции)
-	call	atoi@PLT				# вызов функции atoi для перевода в аргумент типа int, т.е. atoi(argv[i + 3])
-
-	movsx	rdx, r12d				# в rdx копируется r12d
-	lea	rcx, 0[0 + rdx * 4]			# rcx := rdx * 4
-	lea	rdx, ARRAY_A[rip]			# rdx := &ARRAY_A[rip]
-	mov	DWORD PTR [rcx + rdx], eax		# *(rcx + rdx) = eax
-	add	r12d, 1					# ++i
-
-.LOOPFOR:				# цикл for по i
-	mov	rax, QWORD PTR -24[rbp]			# rax := *n
-	mov	eax, DWORD PTR [rax]			# eax := n
-	cmp	r12d, eax				# сравниваем i c n
-	jl	.CHECKINPUTELEMS			# если i < n, переход к метке CHECKINPUTELEMS
-	mov	eax, 0					# return 0
-
-.EXIT:					# выход из программы
-	leave					# освобождает стек на выходе из функции main
-	ret					# выполняется выход из программы
-
-```
-<br>
-
-command_line_output.s
-
-```assembly
-.intel_syntax noprefix			# intel-синтаксис
-.globl command_line_output		# точка запуска command_line_output
-.type command_line_output, @function	# объявление command_line_output как функции
-
-.section .data				# секция объявления переменных
-	bracket:	.string		"[ "
-	frmtnum:	.string		"%d "
-
-.text					# секция кода
-
-command_line_output:
+file_input:
 	push	rbp				# сохраняем rbp на стек
 	mov	rbp, rsp			# присваиваем rbp = rsp
-	sub	rsp, 32				# rsp -= 32 (выделение памяти на стеке)
-	mov	DWORD PTR -20[rbp], edi		# 1-й аргумент command_line_output — int n (в стеке на -20)
-	mov	QWORD PTR -32[rbp], rsi		# 2-й аргумент command_line_output — int arr[] (в стеке на -32)
-	
-	lea	rdi, bracket[rip]		# rdi := "[ " (1-й аргумент функции)
-	call	printf@PLT			# printf("[ ")
-	mov	r12d, 0				# i = 0
-	jmp	.LOOP				# переход к LOOP
-	
-.PRINTELEM:
-	mov	eax, r12d			# eax := i
-	lea	rdx, 0[0 + rax * 4]		# rdx := rax * 4
-	mov	rax, QWORD PTR -32[rbp]		# rax := n	
-	add	rax, rdx			# rax := arr[i]
-	
-	lea	rdi, frmtnum[rip]		# rdi := "%d " (1-й аргумент функции)
-	mov	esi, DWORD PTR [rax]		# esi := arr[i] (2-й аргумент функции)
-	call	printf@PLT			# printf("%d ", arr[i])
-	add	r12d, 1				# ++i
-	
+
+	mov	r12, rdi			# 1-й аргумент file_input — char *pStr (в свободном регистре r12)
+	mov	r13, rsi			# 2-й аргумент file_input — char *filename (в свободном регистре r13)
+
+	mov	rdi, r13			# 1-й аргумент — имя файла
+	lea	rsi, readFile[rip]		# 2-й аргумент —  формат открытия файла (чтение)
+	call	fopen@PLT			# вызов функции открытия файла: file = fopen(filename, "r"), в rax результат функции
+
+	mov	r14, rax			# FILE *file = filename (возвращаемое значение из функции)
+	cmp	r14, 0				# сравнение file с 0 (NULL)
+	jne	.LOOP				# если file != NULL, переход к метке LOOP
+
+	lea	rdi, notOpenFile[rip]		# 1-й аргумент —  сообщение об ошибке
+	mov	rsi, r13			# 2-й аргумент —  имя файла
+	call	printf@PLT			# вызов printf("Unable to open file '%s'\n", filename)
+
+	mov	eax, 1				# return 1						
+	jmp	.EXIT				# переход к выходу из программы
+
 .LOOP:
-	cmp	r12d, DWORD PTR -20[rbp]	# сравнение i и n
-	jl	.PRINTELEM			# если i < n, переход в PRINTELEM
-	
-	mov	edi, 93				# передача 1-го аргумента в функцию
-	call	putchar@PLT			# выводит символ ']' (номер 93), т.е. printf("]")
-	mov	edi, 10				# передача 1-го аргумента в функцию		
-	call	putchar@PLT			# выводит символ перевода строки (номер 10), т.е. printf("\n")
-	
-	leave					# освобождает стек на выходе из функции main
+	mov	rdi, r14			# 1-й аргумент — file
+	call	fgetc@PLT			# вызов ch = fgetc(file) — получение символа из файлового потока
+	mov 	r15d, eax			# в свободный регистр r15d записывается результат функции fgetc
+	mov	edx, r15d			# скопировать содержимое r15d в edx
+
+	mov	rax, r12			# rax = r12 
+	mov	BYTE PTR [rax], dl		# по адресу текущего символа записывается символ из файла (*pStr = ch)
+	add	r12, 1				# ++pStr
+
+	cmp	r15d, -1			# сравнение текущего символа с -1
+	jne	.LOOP				# если не равен -1, переход к метке LOOP
+
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], 0		# по адресу последнего символа записывается конец строки (*pStr = ‘\0’)
+
+	mov	rdi, r14			# 1-й аргумент — file
+	call	fclose@PLT			# вызов fclose(file)
+
+	mov	eax, 0				# return 0
+
+.EXIT:
+	leave					# освобождает стек на выходе из функции
+	ret					# выполняется выход из программы
+
+```
+<br>
+
+file_output.s
+
+```assembly
+.intel_syntax noprefix				# intel-синтаксис
+.globl file_output				# точка запуска file_output
+.type file_output, @function			# объявление file_output как функции
+
+.section .data					# секция объявления переменных
+	writeFile:	.string		"w"	# формат открытия файла (запись)
+
+.text						# секция кода
+
+file_output:
+	push	rbp				# сохраняем rbp на стек
+	mov	rbp, rsp			# присваиваем rbp = rsp
+
+	mov	r12, rdi			# 1-й аргумент file_output — char *pStr (в свободном регистре r12)
+	mov	r13, rsi			# 2-й аргумент file_output — char *filename (в свободном регистре r13)
+
+	mov	rdi, r13			# 1-й аргумент — имя файла
+	lea	rsi, writeFile[rip]		# 2-й аргумент —  формат открытия файла (запись)
+	call	fopen@PLT			# вызов функции открытия файла: file = fopen(filename, "w"), в rax результат функции
+
+	mov	r14, rax			# FILE *file = filename (возвращаемое значение из функции)
+	cmp	r14, 0				# сравнение file с 0 (NULL)
+	je	.EXIT				# если file == NULL, переход к выходу из программы
+
+	jmp	.LOOP				# иначе переход к метке LOOP
+
+.PRINT:
+	movsx	eax, al				# eax = al
+
+	mov	edi, eax			# 1-й аргумент — текущий символ (*pStr)
+	mov	rsi, r14			# 2-й аргумент — file
+	call	fputc@PLT			# вызов fputc(*pStr, file)
+
+	add	r12, 1				# ++pStr
+
+.LOOP:
+	mov	rax, r12 			# rax = pStr
+	movzx	eax, BYTE PTR [rax]		# вычисление адреса текущего символа (записывается в eax)
+
+	test	al, al				# логическое сравнения значения регистра с нулем
+	jne	.PRINT				# если не равно 0, переход к метке PRINT
+	mov	rdi, r14			# 1-й аргумент — file
+	call	fclose@PLT			# вызов fclose(file)
+
+.EXIT:
+	leave					# освобождает стек на выходе из функции
 	ret					# выполняется выход из программы
 
 ```
 
 <br>
 
-count_if_equals_element.s
+form_new_str.s
 
 ```assembly
-.intel_syntax noprefix
-.globl count_if_equals_element
-.type count_if_equals_element, @function
+.intel_syntax noprefix				# intel-синтаксис
+.globl form_new_str				# точка запуска form_new_str
+.type form_new_str, @function			# объявление form_new_str как функции
 
-.text
-	
-count_if_equals_element:
-	push	rbp
-	mov	rbp, rsp
-	mov	r13d, edi			# r13d = n
-	mov	r14, rsi			# r14 = int arr[]
-	mov	r15d, edx			# r15d = int element
-	
-	mov	r11d, 0				# cnt = 0
-	mov	r12d, 0				# i = 0
-	jmp	.LOOP				# переход к циклу
-	
-.INCCNT:
-	lea	rdx, 0[0 + rax * 4]		# rdx := rax * 4
-	mov	rax, r14			# rax := &arr
-	add	rax, rdx			# rax += rdx
-	mov	eax, DWORD PTR [rax]		# eax := arr[i]
-	cmp	r15d, eax			# сравнение element и arr[i]
-	jne	.INCI				# если arr[i] != elementn, переход к INCI
-	add	r11d, 1				# иначе ++cnt;
-	
-.INCI:
-	add	r12d, 1				# ++i
-	
+.text						# секция кода
+
+form_new_str:
+	push	rbp				# сохраняем rbp на стек
+	mov	rbp, rsp			# присваиваем rbp = rsp
+	sub	rsp, 274			# выделяем память на стеке
+
+	mov	r12, rdi			# 1-й аргумент — char *pStr (в свободном регистре r12)
+	mov	r13, rsi			# 2-й аргумент — char ans[] (в свободном регистре r13)
+
+	mov	r14w, 0				# short isNumber = 0
+	mov	r15w, 0				# short isNegative = 0
+
+	mov	QWORD PTR -272[rbp], 0		# char tmp[256] = "" (на стеке выделена память под временную строку)
+
+	jmp	.TOLOOP				# переход к метке TOLOOP
+
 .LOOP:
-	cmp	r12d, r13d			# сравнение i и n
-	jl	.INCCNT				# если i < n, переход к INCCNT
-	mov	eax, r11d			# return cnt
-	pop	rbp				# очистка стека
+	mov	rax, r12			# rax = r12
+	movzx	eax, BYTE PTR [rax]		# в eax записываем текущий символ *pStr (байтовый)
+	cmp	al, 45				# сравниваем текущий символ (al — байтовый регистр) с 45-м кодом ('-')
+	jne	.ADDDIGIT			# если не найден минус, переход к метке ADDDIGIT
+
+	mov	rax, r12			# rax = r12
+	add	rax, 1				# rax = pStr + 1
+	movzx	eax, BYTE PTR [rax]		# в eax записываем следующий символ *(pStr + 1) (байтовый)
+	cmp	al, 47				# сравниваем символ (al — байтовый регистр) с 47-м кодом (c 48-го начинаются цифры)
+	jle	.ADDDIGIT			# если меньше или равен 47 (не цифры), переход к метке ADDDIGIT
+
+	mov	rax, r12
+	add	rax, 1				# rax = pStr + 1
+	movzx	eax, BYTE PTR [rax]		# в eax записываем следующий символ *(pStr + 1) (байтовый)
+	cmp	al, 57				# сравниваем символ (al — байтовый регистр) с 57-м кодом (c 58-го заканчиваются цифры)
+	jg	.ADDDIGIT			# если больше 57 (не цифры), переход к метке ADDDIGIT
+
+	mov	r15w, 1				# найдено отрицательное число (isNegative = 1)
+
+.ADDDIGIT:
+	mov	rax, r12			# rax = r12
+	movzx	eax, BYTE PTR [rax]		# в eax записываем текущий символ *pStr (байтовый)		
+	cmp	al, 47				# сравниваем символ (al — байтовый регистр) с 47-м кодом (c 48-го начинаются цифры)			
+	jle	.CHECKDIGIT			# если меньше или равен 47 (не цифры), переход к метке CHECKDIGIT				
+
+	mov	rax, r12			# rax = r12		
+	movzx	eax, BYTE PTR [rax]		# в eax записываем текущий символ *pStr (байтовый)
+	cmp	al, 57				# сравниваем символ (al — байтовый регистр) с 57-м кодом (c 58-го заканчиваются цифры)
+	jg	.CHECKDIGIT			# если больше 57 (не цифры), переход к метке CHECKDIGIT
+
+	mov	r14w, 1				# найдено число (isNumber = 1)
+	mov	rax, r12			# rax = r12
+	movzx	eax, BYTE PTR [rax]		# в eax записываем текущий символ *pStr (байтовый)
+	mov	BYTE PTR -274[rbp], al		# cToStr[0] = *pStr
+	mov	BYTE PTR -273[rbp], 0		# cToStr[1] = '\0'
+
+	lea	rdi, -272[rbp]			# 1-й аргумент — tmp
+	lea	rsi, -274[rbp]			# 2-й аргумент — cToStr
+	call	strcat@PLT			# вызов функции strcat(tmp, cToStr)
+
+	jmp	.NEXTSYM			# переход к метке NEXTSYM
+
+.CHECKDIGIT:
+	cmp	r14w, 0				# проверяем, храним ли число (if (isNumber == 0)) 
+	je	.NEXTSYM			# если не число, переход к метке NEXTSYM
+
+	mov	r14w, 0				# isNumber = 0 (обнуляем флаг)
+	jmp	.CHECKINSIGNZEROS		# переход к метке CHECKINSIGNZEROS
+
+.DELINSIGNZEROS:
+	lea	rdi, -272[rbp]			# 1-й аргумент — tmp
+	call	strlen@PLT			# вызов strlen(tmp)
+
+	mov	rdx, rax			# rdx = rax = strlen(tmp) (3-й аргумент)
+	lea	rax, -272[rbp]			# rax = tmp
+	add	rax, 1				# rax = tmp + 1
+
+	lea	rdi, -272[rbp]			# rdi = tmp (1-й аргумент)
+	mov	rsi, rax			# rsi = rax = tmp + 1 (2-й аргумент)
+	call	memmove@PLT			# memmove(tmp, tmp + 1, strlen(tmp))
+
+.CHECKINSIGNZEROS:
+	movzx	eax, BYTE PTR -272[rbp]		# в eax записываем tmp[0]
+	cmp	al, 48				# сравниаем код символа с 48 (код '0')
+	jne	.CHECKNEGATIVE			# если цифра не равна нулю, переход к метке CHECKNEGATIVE
+
+	lea	rdi, -272[rbp]			# 1-й аргумент — tmp
+	call	strlen@PLT			# вызов strlen(tmp)
+
+	cmp	rax, 1				# сравниваем длину текущей временной строки с 1
+	ja	.DELINSIGNZEROS			# если длина (беззнаковая) > 1, переход к метке DELINSIGNZEROS
+
+.CHECKNEGATIVE:
+	cmp	r15w, 0				# проверяем, отрицательное ли число (if (isNegative == 0))
+	je	.TMPTOANS			# если не отрицательное, переходим к метке TMPTOANS
+
+	movzx	eax, BYTE PTR -272[rbp]		# в eax записываем tmp[0]
+	cmp	al, 48				# сравниаем код символа с 48 (код '0')
+	jne	.ADDBRACKETS			# если цифра не равна нулю, переход к метке ADDBRACKETS
+
+	lea	rdi, -272[rbp]			# 1-й аргумент — tmp
+	call	strlen@PLT			# вызов strlen(tmp)
+
+	cmp	rax, 1				# сравниваем длину текущей временной строки с 1
+	ja	.DELINSIGNZEROS			# если длина (беззнаковая) > 1, переход к метке
+
+.ADDBRACKETS:
+	lea	rdi, -272[rbp]			# 1-й аргумент — tmp
+	call	strlen@PLT			# вызов strlen(tmp)
+
+	lea	rdx, 1[rax]			# rdx = strlen(tmp) + 1 (3-й аргумент)
+	lea	rax, -272[rbp]			# rax = tmp
+	add	rax, 1				# rax = tmp + 1
+
+	mov	rdi, rax			# rdi = rax = tmp + 1 (1-й аргумент)
+	lea	rsi, -272[rbp]			# rsi = tmp (2-й аргумент)
+	call	memmove@PLT			# вызов memmove(tmp + 1, tmp, strlen(tmp) + 1)
+
+	mov	BYTE PTR -272[rbp], 45		# tmp[0] = '-' (45 — код '-')
+
+	lea	rdi, -272[rbp]			# 1-й аргумент — tmp
+	call	strlen@PLT			# вызов strlen(tmp)
+
+	lea	rdx, 1[rax]			# rdx = strlen(tmp) + 1 (3-й аргумент)
+	lea	rax, -272[rbp]			# rax = tmp
+	add	rax, 1				# rax = tmp + 1
+
+	mov	rdi, rax			# rdi = rax = tmp + 1 (1-й аргумент)
+	lea	rsi, -272[rbp]			# rsi = tmp (2-й аргумент)
+
+	call	memmove@PLT			# вызов memmove(tmp + 1, tmp, strlen(tmp) + 1)
+
+	mov	BYTE PTR -272[rbp], 40		# tmp[0] = '(' (40 — код '(') 
+
+	lea	rdi, -272[rbp]			# 1-й аргумент — tmp
+	call	strlen@PLT			# вызов strlen(tmp)
+
+	mov	rdx, rax			# rdx = rax = strlen(tmp)
+	lea	rax, -272[rbp]			# rax = tmp
+	add	rax, rdx			# rax = tmp + strlen(tmp)
+	mov	WORD PTR [rax], 41		# tmp[strlen(tmp)] = ')' (или strcat(tmp, ")")) (41 — код ')')
+
+.TMPTOANS:
+	mov	rdi, r13			# 1-й аргумент — ans
+	lea	rsi, -272[rbp]			# 2-й аргумент — tmp
+	call	strcat@PLT			# strcat(ans, tmp)
+
+	mov	rdi, r13			# 1-й аргумент — ans
+	call	strlen@PLT			# вызов strlen(ans)
+
+	mov	rdx, rax			# rdx = rax = strlen(ans)
+	mov	rax, r13			# rax = ans
+	add	rax, rdx			# rax = ans + strlen(ans)
+	mov	WORD PTR [rax], 43		# ans[strlen(ans)] = '+' (или strcat(ans, "+")) (43 — код '+')
+	mov	BYTE PTR -272[rbp], 0		# tmp[0] = '\0'
+	mov	r15w, 0				# isNegative = 0
+
+.NEXTSYM:
+	add	r12, 1				# ++pStr
+
+.TOLOOP:
+	mov	rax, r12			# rax = r12
+	movzx	eax, BYTE PTR [rax]		# в eax записываем текущий символ *pStr (байтовый)
+	test	al, al				# проверка, что while (*pStr) == 0
+	jne	.LOOP				# переход к метке LOOP, если while (*pStr) != 0
+
+	cmp	r14w, 0				# иначе выходим из цикла и проверяем, храним ли число (if (isNumber == 0))  
+	je	.ENDANS				# если не число, переход к метке ENDANS
+
+	mov	rdi, r13			# 1-й аргумент — ans
+	lea	rsi, -272[rbp]			# 2-й аргумент — tmp
+	call	strcat@PLT			# вызов strcat(ans, tmp)
+
+	mov	rdi, r13			# 1-й аргумент — ans
+	call	strlen@PLT			# вызов strlen(ans)
+
+	mov	rdx, rax			# rdx = rax = strlen(ans)
+	mov	rax, r13			# rax = ans
+	add	rax, rdx			# rax = ans + strlen(ans)
+	mov	WORD PTR [rax], 43		# ans[strlen(ans)] = '+' (или strcat(ans, "+")) (43 — код '+')
+
+	mov	BYTE PTR -272[rbp], 0		# tmp[0] = '\0'
+
+.ENDANS:
+	mov	rdi, r13			# 1-й аргумент — ans
+	call	strlen@PLT			# вызов strlen(ans)
+
+	lea	rdx, -1[rax]			# rdx = strlen(ans) - 1
+	mov	rax, r13			# rax = ans
+	add	rax, rdx			# rax = ans + strlen(ans) - 1
+	mov	BYTE PTR [rax], 0		# ans[strlen(ans) - 1] = '\0' (убираем лишний плюс с конца)
+
+	leave					# освобождает стек на выходе из функции
 	ret					# выполняется выход из программы
 
 ```
@@ -608,67 +729,161 @@ count_if_equals_element:
 random_generation.s
 
 ```assembly
-.intel_syntax noprefix
+.intel_syntax noprefix				# intel-синтаксис
+.globl random_generation			# точка запуска random_generation
+.type random_generation, @function		# объявление random_generation как функции
+
 .text
-.globl	random_generation
-.type	random_generation, @function
 
 random_generation:
-	push	rbp
-	mov	rbp, rsp
-	sub	rsp, 32
-	mov	QWORD PTR -24[rbp], rdi
+	push	rbp				# сохраняем rbp на стек
+	mov	rbp, rsp			# присваиваем rbp = rsp
 
-	mov	edi, 0				# 1-й агрумент -- 0 (NULL)
-	call	time@PLT			# time(NULL)
-	mov	edi, eax			# 1-й агрумент -- возвращаемое знач. из time(NULL)
-	call	srand@PLT			# srand(time(NULL))
-	call	rand@PLT			# вызов ф-и rand()
-	mov	ecx, DWORD PTR SIZEMAX[rip]	# ecx := SIZEMAX
-	idiv	ecx				# % SIZEMAX
+	mov 	eax, SIZEMAX[rip]		# делимое SIZEMAX в eax
+	mov	ecx, 2				# делитель 2 в ecx
+	cdq					# преобразовывает SIZEMAX в 8-байтовое значение
+	idiv 	ecx				# SIZEMAX / 2 (частное сохраняется в eax, остаток в edx)
+	mov	r13d, eax			# в свободный регистр r13d (double word) записываем результат деления SIZEMAX / 2
 
-	mov	rax, QWORD PTR -24[rbp]		# rax := *n
-	mov	DWORD PTR [rax], edx		# n = edx (rand())
-	mov	eax, DWORD PTR [rax]		# eax := n
-	test	eax, eax			# логическое сравнение (< 1)
-	jg	.TOLOOP				# если *n > 1, переход к объявлению i и циклу (TOLOOP)
-	mov	rax, QWORD PTR -24[rbp]
-	mov	eax, DWORD PTR [rax]		# eax := n
-	lea	edx, 1[rax]			# ++*n
-	mov	rax, QWORD PTR -24[rbp]		# rax := *n
-	mov	DWORD PTR [rax], edx		# n = edx
+	mov	r12, rdi			# в свободный регистр r12 записываем переданный в ф-ю параметр (pStr)
 
-.TOLOOP:
-	mov	r12d, 0				# i = 0
-	jmp	.LOOP				# переход к циклу LOOP
+	mov	edi, 0				# 1-й аргумент — 0 (NULL)
+	call	time@PLT			# вызов функции time(NULL)
 
-.GENERATEELEM:
-	call	rand@PLT			# вызов ф-и rand()
-	mov	ecx, VALUEMAX[rip]		# ecx := VALUEMAX
-	idiv	ecx				# % VALUEMAX
-	mov	ecx, edx			#
-	mov	eax, r12d			#
+	mov	edi, eax			# 1-й аргумент — результат вызова time(NULL)
+	call	srand@PLT			# вызов функции srand(time(NULL))
 
-	lea	rdx, 0[0 + rax * 4]		# 		
-	lea	rax, ARRAY_A[rip]		#	
-	mov	DWORD PTR [rdx + rax], ecx	# 	
-	add	r12d, 1				# ++i
+	xor 	edx, edx 			# очистка edx, в который запишется остаток от операции деления div
+	call	rand@PLT			# вызов функции rand() — делимое, записываемое в eax
+	mov	ecx, r13d			# делитель (SIZEMAX / 2) в ecx
+	cdq					# преобразовывает rand() в 8-байтовое значение
+	idiv 	ecx				# rand() / (SIZEMAX / 2) (частное сохраняется в eax, остаток в edx)
 
-.LOOP:
-	mov	rax, QWORD PTR -24[rbp]		# rax := *n
-	mov	eax, DWORD PTR [rax]		# eax := n
-	cmp	r12d, eax			# сравнение i и n
-	jl	.GENERATEELEM			# если i < n, переход к GENERATEELEM
-	leave					# очистка стека
+	mov	r11d, edx			# в свободный регистр r11d (double word) записываем остаток (int n = rand() % (SIZEMAX / 2))
+	cmp	r11d, 0				# сравнение n с нулём
+	jg	.FLAGS				# если n > 0, переходим к метке FLAGS
+	add	r11d, 1				# иначе ++n
+
+.FLAGS:
+	mov	r10w, 0				# short isNumber = 0
+	mov	r15d, 0				# int i = 0
+	jmp	.LOOPBEGIN			# переход к метке LOOPBEGIN
+
+.GETCHAR:
+	xor 	edx, edx 			# очистка edx, в который запишется остаток от операции деления div
+	call	rand@PLT			# вызов функции rand() — делимое, записываемое в eax
+	mov	ecx, VALUEMAX[rip]		# делитель VALUEMAX (128) в ecx
+	cdq					# преобразовывает rand() в 8-байтовое значение
+	idiv	ecx				# rand() / VALUEMAX (частное сохраняется в eax, остаток в edx)
+
+	mov	r14d, edx			# в свободный регистр r14d (double word) записываем остаток (int c = rand() % VALUEMAX)
+	cmp	r14d, 31			# сравнение кода символа с 31
+	jg	.CHECKNEGATIVE			# если больше 31, переход к метке CHECKNEGATIVE
+
+	sub	r15d, 1				# иначе --i (запускаем цикл заново)
+	jmp	.INCINDEX			# переход к метке INCINDEX
+
+.CHECKNEGATIVE:
+	cmp	r14d, 47			# сравнение кода символа с 48 (с 48-го начинаются цифры)
+	jl	.ADDCLOSESPACE			# если меньше 48, переход к метке ADDCLOSESPACE
+
+	cmp	r14d, 57			# сравнение кода символа с 57 (с 58-го заканчиваются цифры)
+	jg	.ADDCLOSESPACE			# если больше 57, переход к метке ADDCLOSESPACE
+
+	cmp	r10w, 0				# проверяем, встретилось ли число (чтобы вставить пробелы)
+	jne	.NUMBERFLAG			# если число не закончилось (или не началось), переходим к метке NUMBERFLAG
+
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], 32		# по адресу текущего символа записывается пробел (*pStr = ‘ ’)
+	add	r12, 1				# ++pStr
+
+	xor 	edx, edx 			# очистка edx, в который запишется остаток от операции деления div
+	mov	eax, r14d			# делимое c в eax
+	mov 	ecx, 7				# делитель 7 в ecx
+	cdq					# преобразовывает c в 8-байтовое значение
+	idiv 	ecx				# c / 7
+	cmp	edx, 0				# сравниваем остаток от деления с нулём
+	jne	.NUMBERFLAG			# если не равен нулю, переход к метке NUMBERFLAG (минус не ставим)
+
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], 45		# по адресу текущего символа записывается минус (*pStr = ‘-’)
+	add	r12, 1				# ++pStr
+
+.NUMBERFLAG:
+	mov	r10w, 1				# isNumber = 1
+	jmp	.ADDSYMTOSTR			# переход к метке ADDSYMTOSTR
+
+.ADDCLOSESPACE:
+	cmp	r10w, 0				# сравнение isNumber с нулём (не число)
+	je	.ADDSYMTOSTR			# если равен нулю, переход к метке ADDSYMTOSTR (не ставим пробел)
+
+	mov	r10w, 0				# иначе isNumber = 0
+
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], 32		# по адресу текущего символа записывается пробел (*pStr = ‘ ’)
+	add	r12, 1				# ++pStr
+
+.ADDSYMTOSTR:
+	mov	edx, r14d			# скопировать содержимое r14d в edx
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], dl		# по адресу текущего символа записывается символ из файла (*pStr = c)
+	add	r12, 1				# ++pStr
+
+.INCINDEX:
+	add	r15d, 1				# ++i
+
+.LOOPBEGIN:
+	cmp	r15d, r11d			# сравнение i с n
+	jl	.GETCHAR			# если меньше, переход к метке GETCHAR (следующая итерация цикла-for)
+
+	mov	rax, r12			# rax = r12
+	mov	BYTE PTR [rax], 0		# по адресу последнего символа записывается конец строки (*pStr = ‘\0’)
+
+	leave					# освобождает стек на выходе из функции
 	ret					# выполняется выход из программы
 
 ```
+
+<br>
+
+timespec_difference.s
+
+```assembly
+.intel_syntax noprefix			# intel-синтаксис
+.globl	timespec_difference		# точка запуска timespec_difference
+.type	timespec_difference, @function	# объявление timespec_difference как функции
+
+.text					# секция кода
+
+timespec_difference:
+	push	rbp			# сохраняем rbp на стек
+	mov	rbp, rsp		# присваиваем rbp = rsp
+
+	mov	r12, rdi		# 1-й аргумент timespec_diff — struct timespec a.tv_sec (в свободном регистре r12)
+	mov	r13, rsi		# 2-й аргумент timespec_diff — struct timespec a.tv_nsec (в свободном регистре r13)
+	mov	r14, rdx		# 3-й аргумент timespec_diff — struct timespec b.tv_sec (в свободном регистре r14)
+	mov	r15, rcx		# 4-й аргумент timespec_diff — struct timespec b.tv_nsec (в свободном регистре r15)
+
+	imul	rax, r12, 1000000000	# rax = a.tv_sec * 1000000000 (rax - возвращаемое значение)
+	add	rax, r13		# rax = a.tv_sec * 1000000000 + a.tv_nsec
+	
+	imul	r11, r14, 1000000000	# r11 = b.tv_sec * 1000000000 (r11 - свободный регистр)
+	add	r11, r15		# r11 = b.tv_sec * 1000000000 + b.tv_nsec
+
+	sub	rax, r11		# вычитаем время начала: rax = (a.tv_sec * 1000000000 + a.tv_nsec) - (b.tv_sec * 1000000000 + b.tv_nsec)
+	
+	pop rbp				# очистка стека
+	ret				# выполняется выход из программы
+
+```
+
+<br>
 
 ________________________
 
 ### 8. Текст на ассемблере программы, полученный после компиляции программы на C. <br> ###
 
-Смотреть: ACS-IHW-1/codes/generated-asm-code/ <br>
+Файлы расширения .s есть в папке: ACS-IHW-2/codes/time-size-check/compile-c <br>
 
 ________________________
 
@@ -687,24 +902,19 @@ ________________________
 `gcc ./main.s -c -o ./main.o` <br>
 
 Аналогичные команды выполнить для всех файлов-функций: <br>
-command_line_input.c <br>
-command_line_output.c <br>
-count_if_equals_element.c <br>
 file_input.c <br>
 file_output.c <br>
-fill_ARRAY_B.c <br>
-get_min_from_array.c <br>
+form_new_str.c <br>
 random_generation.c <br>
 timespec_difference.c <br>
 
 Для линковки: <br>
-`gcc -lc main.o command_line_input.o command_line_output.o count_if_equals_element.o file_input.o file_output.o fill_ARRAY_B.o get_min_from_array.o random_generation.o timespec_difference.o -o foo.exe` <br>
+`gcc -lc main.o file_input.o file_output.o random_generation.o timespec_difference.o form_new_str.o -o a.exe` <br>
 
 Убираем макросы: <br>
-endbr64, cdqe, cdq <br>
+endbr64, cdqe, cdq, nop <br>
 
 Переписываем .section.data и названия меток (LC0, L1, etc.) для наглядности <br>
-
 
 Убираем лишние присваивания: вместо  <br>
 `mov	rax, QWORD PTR -8[rbp]` <br>
@@ -712,33 +922,39 @@ endbr64, cdqe, cdq <br>
 сразу пишем <br>
 `mov	rdi, QWORD PTR -8[rbp]` <br>
 
-Изменения main: <br>
-Добавилось небольшое отличие от программы на Си — вывод `elapsed_ns` после выводов массива (чтобы при генерации массивов время было видно при выводе) <br>
+Критерий на 4. <br>
+
+1. Приведено решение задачи на Си (см. п.6. Исходные тексты программы на языке C)
+2. В полученный ассемблер добавлены поясняющие комментарии (см. п.7. Тексты программы на языке ассемблера)
+3. Из ассемблерной программы убраны лишние макросы (`endbr64, cdqe, cdq, nop`)
+4. Модифицированный ассемблер отдельно откомпилирован и скомпонован без использования опций отладки (`gcc ./main.s -c -o ./main.o`)
+5. Представлено полное тестовое покрытие (см. п.4-5 Тесты и результаты прогонов)
+
+Критерий на 5. <br>
+
+1. Использованы функции с передачей данных через параметры (`call fputc@PLT`)
+2. Использованы локальные переменные
+3. В комментариях к ассемблеру описана передача параметров и получение возвращаемого значения
+4. В комментариях к ассемблеру описаны аналоги вызовов функций в Си
 
 Критерий на 6. <br>
-Оптимизация использования регистров процессора: <br>
-// r8-r15 -- свободные регистры <br>
-Переменную цикла i записываем в один из свободных регистров: <br>
-DWORD PTR -4[rbp] -> r12d <br>
-<br>
-При редакции count_if_equals_element.s использовались: <br>
-DWORD PTR -4[rbp] -> r11d (т.к. double word, используем 0-3 bytes) <br> 
-DWORD PTR -8[rbp] -> r12d <br>
-DWORD PTR -20[rbp] -> r13d <br>
-QWORD PTR -32[rbp] -> r14 (т.к. quad word, используем 8-byte register) <br> 
-DWORD PTR -24[rbp] -> r15d <br>
+
+1. Использования регистров процессора для хранения переменных не на стеке (`r8-r15(d)`)
+2. Комментарии поясняют использование регистров
+3. Представлены тестовые прогоны (см. п.4-5 Тесты и результаты прогонов)
+4. Представлено сравнение результатов скомпилированной программы и измененной (см. критерий на 9)
 
 Критерий на 7. <br>
-Скомпилированы и отредактированы (к сожалению, не все...) программы на ассемблере, в виде 10 единиц компиляции (походу, зря...). <br>
-// но единиц компиляции получилось отредактировать больше 2-х <br>
-Реализован файловый ввод/вывод (после имени исполняемого файла в командной строке достаточно ввести символ 2). <br>
-<br>
+
+1. Реализация программы на Си и ассемблере в виде 6 единиц компиляции
+2. Использование файлов для ввода и вывода данных (для ввода с файла необходимо выбрать опцию 2 в командной строке; вывод осуществляется и в консоль, и в файл)
+3. Представлены файлы с тестами (ACS-IHW-2/tests)
 
 Критерий на 8. <br>
-Реализована генерация исходного массива (псевдослучайная) и добавлена функция замера времени заполнения массива B с помощью clock_gettime. <br>
-Программа генерирует случайный массив, если в качестве `option` подавался символ, отличный от 1 или 2 (но не NULL). <br>
-Время замерялось перед поиском минимума и перед выводом полученного массива, разница показателей есть время заполнения. <br>
-<br>
+
+1. Использование генерации исходной строки (псевдослучайной). Программа генерирует случайную строку, если в качестве `option` подавался символ, отличный от 1 или 2 (но не NULL)
+2. Выбор ввода с консоли, файла или генерации данных через аргументы командной строки
+3. Использование замеров времени формирования новой строки между вводом и выводом данных с помощью `clock_gettime`
 
 Критерий на 9. <br>
 Для оптимизации по скорости все части программы компилировались с флагом -O3. <br>
@@ -747,19 +963,14 @@ DWORD PTR -24[rbp] -> r15d <br>
 Таблица сравнений приведена ниже: <br>
 | Критерий	     	| Скомпилированный Си| С оптим. -O3	   | С оптим. -Os        | Отредактированный вручную после компиляции |       
 | ----------------------|:------------------:| :------------------:|:-------------------:|:------------------------------------------:|
-| размер асм-файла	| 12 588 байт        | 12 257 байт         | 10 720 байт         | - байт                               |
-| размер испол. файла	| 17 120 байт        | 17 240 байт         | 17 192 байт         | - байт                                |
-| время работы		| 738 438.1 ns       | 427 981.7 ns        | 326 355.1 ns        | - ns                               |
+| размер асм-файла	| 12 588 байт        | 12 257 байт         | 10 720 байт         | 28 739 байт                                |
+| размер испол. файла	| 17 120 байт        | 17 240 байт         | 17 192 байт         | 18 264 байт                                |
+| время работы		| 738 438.1 ns       | 427 981.7 ns        | 326 355.1 ns        | 681 949.6 ns                               |
+<br>
+Размер асм-файла == размер 6 файлов расширения .s (из папки time-size-check), исполняемый файл в этой же папке <br>
+Время работы == усреднённое время работы 10 запусков псевдослучаного генератора (т.к. большой размер данных) <br>
 
-<br>
-// размер асм-файла == размер 6 файлов расширения .s (из папки time-size-check), исполняемый файл в этой же папке
-<br>
-// время работы == усреднённое время работы 10 запусков псевдослучаного генератора (т.к. большой размер массива)
-<br>
-// программа, отредактированная вручную, отредактирована не полностью (не во всех асм-файлах внесены изменения с регистрами), но при замерах будут учитываться все подпрограммы
-<br>
-
-Результаты 10 замеров генератора <br>
+Результаты 10 замеров генератора: <br>
 
 Скомп. Си: <br>
 533317
@@ -801,11 +1012,20 @@ DWORD PTR -24[rbp] -> r15d <br>
 <br>
 
 Скомп. Си c правками <br>
-
+740856
+869276
+1464559
+541471
+1304529
+396489
+403311
+76749
+967291
+54965
 <br>
 
-
-По времени самый выгодный: с -O3 <br>
+По времени самый выгодный: с -Os <br>
 По размеру файлов асм: с -Os <br>
 По размеру файла исполняемого: обычный компил с Си (но выигравает он не сильно) <br>
+Отредактированный вручную ассемблер по времени выигрывает только у скомпилированного Си примерно на 0,000056 секунды, по остальным параметрам он сильно проигрывает <br>
 <br>
