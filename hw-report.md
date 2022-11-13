@@ -23,7 +23,7 @@ ________________________
 
 ### 5. Результаты тестовых прогонов для различных исходных данных. <br> ###
 
-Тесты можно посмотреть здесь: ([ACS-IHW-2/tests](https://github.com/kseniag03/ACS-IHW-2/tree/main/tests)) <br>
+Тесты можно посмотреть здесь: [ACS-IHW-2/tests](https://github.com/kseniag03/ACS-IHW-2/tree/main/tests) <br>
 
 Ввод с консоли: <br>
 ![Screenshot from 2022-11-06 23-30-44](https://user-images.githubusercontent.com/114473740/200193764-e0978872-eaaa-40b5-9d06-a2fab6d52c70.png) <br>
@@ -39,7 +39,7 @@ ________________________
 
 ### 6. Исходные тексты программы на языке C. <br> ###
 
-Можно также посмотреть здесь: ACS-IHW-2/codes <br>
+Можно также посмотреть здесь: [ACS-IHW-2/codes](https://github.com/kseniag03/ACS-IHW-2/tree/main/codes) <br>
 
 main.c -- основная функция
 ```c
