@@ -413,7 +413,7 @@ file_input.s
 
 .section .data					# секция объявления переменных
 	readFile:	.string		"r"
-	notOpenFile:	.string	"Unable to open file '%s'\n"
+	notOpenFile:	.string		"Unable to open file '%s'\n"
 
 .text						# секция кода
 
