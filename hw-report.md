@@ -263,6 +263,13 @@ ________________________
 
 Можно также посмотреть здесь: ACS-IHW-2/codes/edited-asm-code <br>
 
+[main](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/edited-asm-code/main.s) <br>
+[file_input](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/edited-asm-code/file_input.s) <br>
+[file_output](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/edited-asm-code/file_output.s) <br>
+[random_generation](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/edited-asm-code/random_generation.s) <br>
+[timespec_difference](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/edited-asm-code/timespec_difference.s) <br>
+[form_new_str](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/edited-asm-code/form_new_str.s) <br>
+
 main.s
 
 ```assembly
@@ -884,6 +891,13 @@ ________________________
 ### 8. Текст на ассемблере программы, полученный после компиляции программы на C. <br> ###
 
 Файлы расширения .s есть в папке: ACS-IHW-2/codes/time-size-check/compile-c <br>
+
+[main](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/time-size-check/compile-c/main.s) <br>
+[file_input](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/time-size-check/compile-c/file_input.s) <br>
+[file_output](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/time-size-check/compile-c/file_output.s) <br>
+[random_generation](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/time-size-check/compile-c/random_generation.s) <br>
+[timespec_difference](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/time-size-check/compile-c/timespec_difference.s) <br>
+[form_new_str](https://github.com/kseniag03/ACS-IHW-2/blob/main/codes/time-size-check/compile-c/form_new_str.s) <br>
 
 ________________________
 
